@@ -15,3 +15,4 @@ def serve():
 @home_bp.errorhandler(404)
 def not_found(e):
     return send_from_directory(os.path.join(os.path.dirname(__file__), "../../frontend/dist"), "index.html")
+# kdsjfldkasj fl;kasdjfal;ksj
