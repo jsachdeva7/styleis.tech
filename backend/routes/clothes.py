@@ -112,7 +112,7 @@ def add_clothing_item():
     max_temp_map = {
         "layers": 60,
         "shoes": 100,
-        "longPants": 60,  # Changed from "long pants" to match frontend
+        "longPants": 75,  # Changed from "long pants" to match frontend
         "shorts": 100,
         "shirts": 100,
         "headwear": 100,
@@ -156,8 +156,8 @@ def add_clothing_item():
             "cost": cost,  # Now stores '$', '$$', or '$$$'
             "condition": condition,  # Now stores 'new', 'used', or 'worn'
             "frequency": 0,
-            "in_jail": False,  # Use boolean instead of 0
-            "marked_for_donation": False,  # Use boolean instead of 0
+            "in_jail": 0,  # Use boolean instead of 0
+            "marked_for_donation": 0,  # Use boolean instead of 0
             "item_name": item_name, 
             "min_temp": int(min_temp),
             "max_temp": int(max_temp),
@@ -218,10 +218,102 @@ def get_all_clothes():
 
 @clothes_bp.route("/ootd", methods=["POST"])
 def create_ootd():
-   """Create outfit of the day with selected clothing IDs"""
-   print("POST /api/clothes/ootd hit")
-   # Expected: list of clothing IDs
-   return jsonify({"message": "POST /api/clothes/ootd hit"})
+    """Create outfit of the day with selected clothing IDs and update donation scores."""
+    print("POST /api/clothes/ootd hit")
+
+    try:
+        clothing_ids = request.json.get("clothing_ids", [])
+        if not clothing_ids:
+            return jsonify({"error": "No clothing_ids provided"}), 400
+
+        updated = []
+
+        # --- Update frequency for selected clothes ---
+        for clothing_id in clothing_ids:
+            doc_ref = db.collection("clothes").document(clothing_id)
+            doc = doc_ref.get()
+            if doc.exists:
+                data = doc.to_dict()
+                freq = data.get("frequency", 0) + 1
+                doc_ref.update({
+                    "frequency": freq,
+                    "last_worn_date": pd.Timestamp.now().isoformat()
+                })
+                updated.append({"id": clothing_id, "new_frequency": freq})
+
+        # --- Fetch all clothes ---
+        clothes_ref = db.collection("clothes")
+        all_docs = clothes_ref.stream()
+
+        all_clothes = []
+        for doc in all_docs:
+            data = doc.to_dict()
+            data["id"] = doc.id
+            all_clothes.append(data)
+
+        if not all_clothes:
+            return jsonify({"error": "No clothes found in database"}), 404
+
+        df = pd.DataFrame(all_clothes)
+
+        # --- Fill missing values safely ---
+        df["frequency"] = df["frequency"] if "frequency" in df else 0
+        df["frequency"] = df["frequency"].fillna(0)
+        df["condition"] = df.get("condition", 2).fillna(2)  # default: used
+        df["cost"] = df.get("cost", "$").fillna("$")
+        df["applicable_days"] = df.get("applicable_days", 1).fillna(1)
+        df["last_worn_date"] = pd.to_datetime(
+        df.get("last_worn_date", pd.Timestamp.now()),
+        format="mixed",
+        errors="coerce",
+        utc=True
+    )
+
+        today = pd.Timestamp.now(tz="UTC")
+        df["days_since_worn"] = (
+        (today - df["last_worn_date"])
+        .dt.days.clip(lower=0)
+        .fillna(0)
+        .astype(int)
+    )
+
+        # --- Compute donation score ---
+        condition_map = {1: 0.33, 2: 0.66, 3: 1.0}
+        cost_map = {"$": 0.33, "$$": 0.66, "$$$": 1.0}
+
+        df["donation_score"] = (
+            (1 - df["frequency"].rank(pct=True)) * 0.25 +
+            (1 - df["condition"].map(condition_map)) * 0.25 +
+            df["days_since_worn"].rank(pct=True) * 0.25 +
+            (1 - df["applicable_days"].astype(float).rank(pct=True)) * 0.15 +
+            (1 - df["cost"].map(cost_map)) * 0.10
+        )
+
+        # --- Mark jail status ---
+        
+        df["in_jail"] = (df["donation_score"] > 0.5).astype(int)  # True/False
+
+        # --- Push updates back to Firestore ---
+        for _, row in df.iterrows():
+            db.collection("clothes").document(row["id"]).update({
+                "in_jail": row["in_jail"],
+                "donation_score": float(row["donation_score"]),
+                "days_since_worn": int(row["days_since_worn"])
+            })
+
+
+        return jsonify({
+            "message": "OOTD updated successfully",
+            "updated": updated,
+            "total_clothes_checked": len(df),
+            "jail_count": int(df["in_jail"].sum())
+        }), 200
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 
 
 @clothes_bp.route("/jail", methods=["GET"])
@@ -252,23 +344,58 @@ def get_jail_clothes():
 def takeout_from_jail():
    """Take a clothing item out of jail"""
    print("POST /api/clothes/jail/takeout hit")
-   # Expected: clothing ID
-   return jsonify({"message": "POST /api/clothes/jail/takeout hit"})
+   try:
+        clothing_id = request.json.get("clothes_id")
+        if not clothing_id:
+            return jsonify({"error": "No clothing_id provided"}), 400
+        doc_ref = db.collection("clothes").document(clothing_id)
+        doc = doc_ref.get()
+        if not doc.exists:
+            return jsonify({"error": "Clothing item not found"}), 404
+        doc_ref.update({"in_jail": 0})
+        return jsonify({"message": f"Clothing item {clothing_id} removed from jail."}), 200
+   except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 @clothes_bp.route("/jail/donate", methods=["POST"])
 def confirm_donation():
-   """Confirm that a clothing item will be donated"""
-   print("POST /api/clothes/jail/donate hit")
-   # Expected: clothing ID
-   return jsonify({"message": "POST /api/clothes/jail/donate hit"})
+    """Confirm that a clothing item will be donated"""
+    try:
+        clothing_id = request.json.get("clothes_id")
+        if not clothing_id:
+            return jsonify({"error": "No clothing_id provided"}), 400
+        doc_ref = db.collection("clothes").document(clothing_id)
+        doc = doc_ref.get()
+        if not doc.exists:
+            return jsonify({"error": "Clothing item not found"}), 404
+        doc_ref.update({"marked_for_donation": 1})
+        return jsonify({"message": f"Clothing item {clothing_id} marked for donation."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 @clothes_bp.route("/donations", methods=["GET"])
 def get_donation_basket():
-   """See the donation basket - items marked for donation"""
-   print("GET /api/clothes/donations hit")
-   return jsonify({"message": "GET /api/clothes/donations hit"})
+    """See the donation basket - items marked for donation"""
+    try:
+        clothes_ref = db.collection("clothes")
+        docs = clothes_ref.stream()
+        donation_candidates = []
+        for doc in docs:
+            data = doc.to_dict()
+            # Firestore may store bools or ints, so check both
+            in_jail = data.get("in_jail", 0)
+            marked_for_donation = data.get("marked_for_donation", 0)
+            if in_jail == 1 and marked_for_donation == 0:
+                data["id"] = doc.id
+                donation_candidates.append(data)
+        return jsonify({"donation_basket": donation_candidates}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 
