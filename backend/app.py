@@ -12,6 +12,12 @@ app.register_blueprint(clothes_bp, url_prefix='/api/clothes')
 app.register_blueprint(weather_bp, url_prefix='/api/weather')
 app.register_blueprint(locations_bp, url_prefix='/api/locations')
 
+
+@app.route("/", methods=["GET"])
+def index():
+    return "Welcome to the Backend API!"
+
+
 # Example POST endpoint
 @app.route("/echo", methods=["POST"])
 def echo():
