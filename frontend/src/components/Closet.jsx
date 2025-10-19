@@ -1,41 +1,13 @@
-import { useState } from 'react';
-
-// Import assets
-import blueCap from '../assets/hats/blue_cap.png';
-import yellowCap from '../assets/hats/yellow_cap.png';
-import jersey from '../assets/shirts/jersey.png';
-import whiteShirt from '../assets/shirts/white shirt.png';
-import cargo from '../assets/bottoms/cargo.png';
-import jorts from '../assets/bottoms/jorts.png';
-import dunkLows from '../assets/shoes/dunk lows.png';
-import dunkLows2 from '../assets/shoes/dunk lows 2.png';
+import { useQuery } from '@tanstack/react-query';
+import LoadingSpinner from './LoadingSpinner';
+import { fetchClothes } from '../api/clothesApi';
 
 const Closet = ({ onAddItem }) => {
-  const [closetItems] = useState({
-    headwear: [
-      { id: 1, image: blueCap, name: 'Blue Cap' },
-      { id: 2, image: yellowCap, name: 'Yellow Cap' },
-    ],
-    shirts: [
-      { id: 3, image: jersey, name: 'Jersey' },
-      { id: 4, image: whiteShirt, name: 'White Shirt' },
-    ],
-    layers: [
-      // Empty for now
-    ],
-    shorts: [
-      { id: 5, image: jorts, name: 'Jorts' },
-    ],
-    longPants: [
-      { id: 6, image: cargo, name: 'Cargo Pants' },
-    ],
-    winterwear: [
-      // Empty for now
-    ],
-    shoes: [
-      { id: 7, image: dunkLows, name: 'Dunk Lows' },
-      { id: 8, image: dunkLows2, name: 'Dunk Lows 2' },
-    ],
+  // Use TanStack Query for data fetching with caching
+  const { data: closetItems, isLoading: loading, isError, error, refetch } = useQuery({
+    queryKey: ['clothes'],
+    queryFn: fetchClothes,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
   });
 
   const categories = [
@@ -52,7 +24,27 @@ const Closet = ({ onAddItem }) => {
     <div className="h-full flex flex-col p-4">
       <h2 className="text-2xl text-center font-semibold mb-4 text-[rgb(0,120,86)]">🚪 My Closet</h2>
 
-      <div className="flex-1 overflow-y-auto">
+      {/* Loading State */}
+      {loading && <LoadingSpinner message="Loading your closet..." />}
+
+      {/* Error State */}
+      {isError && !loading && (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center bg-red-100 p-6 rounded-lg">
+            <p className="text-red-600 font-medium mb-2">⚠️ {error?.message || 'Failed to load clothes'}</p>
+            <button 
+              onClick={() => refetch()}
+              className="px-4 py-2 bg-[rgb(0,120,86)] text-white rounded-lg hover:bg-[rgb(0,100,70)] transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Clothes List */}
+      {!loading && !isError && closetItems && (
+        <div className="flex-1 overflow-y-auto">
         <div className="space-y-4 pb-6">
           {categories.map((category) => (
             <div key={category.key} className="bg-white/40 backdrop-blur-md rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -87,7 +79,8 @@ const Closet = ({ onAddItem }) => {
             </div>
           ))}
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

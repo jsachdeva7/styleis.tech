@@ -14,6 +14,7 @@ const ClosetPage = () => {
   const handleBackToCloset = () => {
     setShowAddItem(false);
     setSelectedCategory(null);
+    // No need for refresh key - TanStack Query cache will auto-invalidate
   };
 
   return (

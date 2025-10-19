@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import LoadingSpinner from './LoadingSpinner';
 
 const DonationLocations = ({ onBackToSuggestions, onShowBasket }) => {
   const [locations, setLocations] = useState([]);
@@ -75,22 +76,29 @@ const DonationLocations = ({ onBackToSuggestions, onShowBasket }) => {
 
       <h2 className="text-2xl text-center font-semibold mb-4 text-[rgb(0,120,86)]">📍 Plan a Donation</h2>
 
+      {/* Loading State */}
+      {loading && <LoadingSpinner message="Finding donation centers near you..." />}
+
+      {/* Error State */}
+      {error && !loading && (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600 mb-2">{error}</p>
+            <p className="text-sm text-gray-500">Please check your location settings.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && !error && locations.length === 0 && (
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-gray-600 text-center">No donation centers found nearby.</p>
+        </div>
+      )}
+
       {/* Locations List */}
-      <div className="flex-1 overflow-y-auto mb-4">
-        {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-gray-600">Finding donation centers near you...</p>
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center h-full">
-            <p className="text-gray-600 text-center mb-2">{error}</p>
-            <p className="text-sm text-gray-500 text-center">Please check your location settings.</p>
-          </div>
-        ) : locations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full">
-            <p className="text-gray-600 text-center">No donation centers found nearby.</p>
-          </div>
-        ) : (
+      {!loading && !error && locations.length > 0 && (
+        <div className="flex-1 overflow-y-auto mb-4">
           <div className="space-y-4 pb-6">
             {locations.map((location, index) => (
               <div key={index} className="bg-white/40 backdrop-blur-md rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -116,8 +124,8 @@ const DonationLocations = ({ onBackToSuggestions, onShowBasket }) => {
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
