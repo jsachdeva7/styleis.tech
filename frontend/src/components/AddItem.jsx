@@ -1,12 +1,30 @@
 import { useState, useEffect } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { addClothingItem } from '../api/clothesApi';
+import LoadingSpinner from './LoadingSpinner';
 
 const AddItem = ({ onBack, category: sub_category }) => {
+  const queryClient = useQueryClient();
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [name, setName] = useState('');
   const [condition, setCondition] = useState('');
   const [price, setPrice] = useState('');
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
+
+  // Mutation for adding clothing items
+  const mutation = useMutation({
+    mutationFn: addClothingItem,
+    onSuccess: () => {
+      // Invalidate and refetch to get real data from backend
+      queryClient.invalidateQueries({ queryKey: ['clothes'] });
+      // Navigate back immediately
+      onBack();
+    },
+    onError: (error) => {
+      showToast('Error: ' + error.message, 'error');
+    },
+  });
 
   // Auto-dismiss toast after 3 seconds
   useEffect(() => {
@@ -48,7 +66,7 @@ const AddItem = ({ onBack, category: sub_category }) => {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     // Validate fields
     if (!name || !condition || !price || !imageFile) {
       showToast('Please fill in all fields and upload an image', 'error');
@@ -67,32 +85,24 @@ const AddItem = ({ onBack, category: sub_category }) => {
     formData.append('sub_category', sub_category);  // Specific sub_category (shirts, longPants, etc.)
     formData.append('image', imageFile);
 
-    try {
-      const response = await fetch('http://localhost:5000/api/clothes', {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        console.log('Item saved successfully:', data);
-        showToast('Item added successfully! 🎉', 'success');
-        setTimeout(() => onBack(), 1500);  // Navigate back after showing success message
-      } else {
-        showToast('Error: ' + (data.error || 'Unknown error'), 'error');
-      }
-    } catch (error) {
-      console.error('Error saving item:', error);
-      showToast('Failed to save item. Please try again.', 'error');
-    }
+    // Use mutation to add the item
+    mutation.mutate(formData);
   };
+
+  // Show loading spinner while mutation is in progress
+  if (mutation.isPending) {
+    return (
+      <div className="h-full flex flex-col">
+        <LoadingSpinner message="Adding item to your closet..." />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 h-full flex flex-col items-center justify-center relative">
       {/* Toast Notification */}
       {toast.show && (
-        <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
           <div className={`px-6 py-3 rounded-lg shadow-lg backdrop-blur-md flex items-center gap-2 ${
             toast.type === 'success' 
               ? 'bg-[rgb(0,120,86)]/90 text-white' 

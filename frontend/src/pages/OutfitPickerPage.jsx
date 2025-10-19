@@ -1,18 +1,27 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons';
-
-// Import assets
-import blueCap from '../assets/hats/blue_cap.png';
-import yellowCap from '../assets/hats/yellow_cap.png';
-import jersey from '../assets/shirts/jersey.png';
-import whiteShirt from '../assets/shirts/white shirt.png';
-import cargo from '../assets/bottoms/cargo.png';
-import jorts from '../assets/bottoms/jorts.png';
-import dunkLows from '../assets/shoes/dunk lows.png';
-import dunkLows2 from '../assets/shoes/dunk lows 2.png';
+import { fetchWeather } from '../api/weatherApi';
+import { fetchClothes } from '../api/clothesApi';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const OutfitPickerPage = () => {
+  // Fetch weather data with caching (shared with other components)
+  const { data: weather, isLoading: weatherLoading } = useQuery({
+    queryKey: ['weather'],
+    queryFn: () => fetchWeather(),
+    staleTime: 10 * 60 * 1000, // Weather data fresh for 10 minutes
+    retry: 1,
+  });
+
+  // Fetch clothes data with caching (shared with Closet component)
+  const { data: allClothes, isLoading: clothesLoading } = useQuery({
+    queryKey: ['clothes'],
+    queryFn: fetchClothes,
+    staleTime: 5 * 60 * 1000, // Clothes data fresh for 5 minutes
+  });
+
   const [outfit, setOutfit] = useState({
     hat: 0,
     shirt: 0,
@@ -20,12 +29,26 @@ const OutfitPickerPage = () => {
     shoe: 0
   });
 
-  const categories = {
-    hat: [blueCap, yellowCap],
-    shirt: [jersey, whiteShirt],
-    bottom: [cargo, jorts],
-    shoe: [dunkLows, dunkLows2]
-  };
+  // Filter clothes by temperature range
+  const categories = useMemo(() => {
+    if (!allClothes || !weather) {
+      return { hat: [], shirt: [], bottom: [], shoe: [] };
+    }
+
+    const currentTemp = weather.temperature;
+
+    // Filter function to check if item is appropriate for current temperature
+    const isAppropriateForTemp = (item) => {
+      return currentTemp >= item.min_temp && currentTemp <= item.max_temp;
+    };
+
+    return {
+      hat: allClothes.headwear?.filter(isAppropriateForTemp) || [],
+      shirt: [...(allClothes.shirts || []), ...(allClothes.layers || []), ...(allClothes.winterwear || [])].filter(isAppropriateForTemp),
+      bottom: [...(allClothes.shorts || []), ...(allClothes.longPants || [])].filter(isAppropriateForTemp),
+      shoe: allClothes.shoes?.filter(isAppropriateForTemp) || []
+    };
+  }, [allClothes, weather]);
 
   const categoryNames = {
     hat: 'Hat',
@@ -38,6 +61,8 @@ const OutfitPickerPage = () => {
     setOutfit(prev => {
       const currentIndex = prev[category];
       const length = categories[category].length;
+      if (length === 0) return prev; // No items to cycle through
+      
       const newIndex = direction === 1 
         ? (currentIndex + 1) % length
         : (currentIndex - 1 + length) % length;
@@ -48,32 +73,58 @@ const OutfitPickerPage = () => {
     });
   };
 
+  // Show loading spinner while fetching data
+  if (weatherLoading || clothesLoading) {
+    return (
+      <div className="h-full flex flex-col">
+        <LoadingSpinner message="Loading outfit picker..." />
+      </div>
+    );
+  }
+
   return (
     <div className="px-2 py-8 h-full flex flex-col relative">
       {/* Weather Display */}
       <div className="absolute top-2 right-2 bg-white/40 backdrop-blur-md rounded-lg px-2 py-0.5 shadow-sm">
-        <div className="flex items-center gap-1">
-          {/* Weather Icon */}
-          <div className="text-sm">☀️</div>
-          
-          {/* Current Temperature */}
-          <div className="text-xs font-medium text-gray-800">72°F</div>
-        </div>
+        {weatherLoading ? (
+          <div className="flex items-center gap-1 px-1">
+            <div className="text-xs text-gray-600">Loading...</div>
+          </div>
+        ) : weather ? (
+          <div className="flex items-center gap-1">
+            {/* Weather Icon */}
+            <div className="text-sm">{weather.weather_emoji}</div>
+            
+            {/* Current Temperature */}
+            <div className="text-xs font-medium text-gray-800">{weather.temperature}°F</div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1">
+            <div className="text-sm">🌤️</div>
+            <div className="text-xs font-medium text-gray-800">--°F</div>
+          </div>
+        )}
       </div>
       {/* Hat Selection - 15% of available height */}
-      <div className="relative w-full" style={{ height: '10%' }}>
-        <button
-          onClick={() => cycleCategory('hat')}
-          style={{ filter: 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4))' }}
-          className="w-full h-full rounded-lg flex items-center justify-center overflow-hidden hover:opacity-80 transition-opacity"
-        >
-          <img 
-            src={categories.hat[outfit.hat]} 
-            alt={`Hat ${outfit.hat + 1}`}
-            style={{ maxHeight: '100%', maxWidth: '100%', width: 'auto', height: 'auto' }}
-            className="object-contain rounded-lg"
-          />
-        </button>
+      <div className="relative w-full" style={{ height: '15%' }}>
+        {categories.hat.length > 0 ? (
+          <button
+            onClick={() => cycleCategory('hat')}
+            style={{ filter: 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4))' }}
+            className="w-full h-full rounded-lg flex items-center justify-center overflow-hidden hover:opacity-80 transition-opacity"
+          >
+            <img 
+              src={categories.hat[outfit.hat]?.image} 
+              alt={categories.hat[outfit.hat]?.name || 'Hat'}
+              style={{ maxHeight: '100%', maxWidth: '100%', width: 'auto', height: 'auto' }}
+              className="object-contain rounded-lg"
+            />
+          </button>
+        ) : (
+          <div className="w-full h-full rounded-lg flex items-center justify-center bg-white/20 backdrop-blur-sm">
+            <p className="text-xs text-gray-500">No hats for this weather</p>
+          </div>
+        )}
         {/* Arrow Buttons */}
         <button
           onClick={(e) => { e.stopPropagation(); cycleCategory('hat', -1); }}
@@ -90,19 +141,25 @@ const OutfitPickerPage = () => {
       </div>
 
        {/* Shirt Selection - 35% of available height */}
-       <div className="relative" style={{ height: '25%' }}>
-         <button
-           onClick={() => cycleCategory('shirt')}
-           style={{ filter: 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4))' }}
-           className="w-full h-full rounded-lg flex items-center justify-center overflow-hidden hover:opacity-80 transition-opacity"
-         >
-           <img 
-             src={categories.shirt[outfit.shirt]} 
-             alt={`Shirt ${outfit.shirt + 1}`}
-             style={{ maxHeight: '100%', maxWidth: '100%', width: 'auto', height: 'auto' }}
-             className="object-contain rounded-lg"
-           />
-         </button>
+       <div className="relative" style={{ height: '27%' }}>
+         {categories.shirt.length > 0 ? (
+           <button
+             onClick={() => cycleCategory('shirt')}
+             style={{ filter: 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4))' }}
+             className="w-full h-full rounded-lg flex items-center justify-center overflow-hidden hover:opacity-80 transition-opacity"
+           >
+             <img 
+               src={categories.shirt[outfit.shirt]?.image} 
+               alt={categories.shirt[outfit.shirt]?.name || 'Shirt'}
+               style={{ maxHeight: '100%', maxWidth: '100%', width: 'auto', height: 'auto' }}
+               className="object-contain rounded-lg"
+             />
+           </button>
+         ) : (
+           <div className="w-full h-full rounded-lg flex items-center justify-center bg-white/20 backdrop-blur-sm">
+             <p className="text-xs text-gray-500">No shirts for this weather</p>
+           </div>
+         )}
          
          {/* Arrow Buttons */}
          <button
@@ -128,19 +185,25 @@ const OutfitPickerPage = () => {
        </div>
 
       {/* Bottom Selection - 30% of available height */}
-      <div className="relative w-full" style={{ height: '35%' }}>
-        <button
-          onClick={() => cycleCategory('bottom')}
-          style={{ filter: 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4))' }}
-          className="w-full h-full rounded-lg flex items-center justify-center overflow-hidden hover:opacity-80 transition-opacity"
-        >
-          <img 
-            src={categories.bottom[outfit.bottom]} 
-            alt={`Bottom ${outfit.bottom + 1}`}
-            style={{ maxHeight: '100%', maxWidth: '100%', width: 'auto', height: 'auto' }}
-            className="object-contain rounded-lg"
-          />
-        </button>
+      <div className="relative w-full" style={{ height: '27%' }}>
+        {categories.bottom.length > 0 ? (
+          <button
+            onClick={() => cycleCategory('bottom')}
+            style={{ filter: 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4))' }}
+            className="w-full h-full rounded-lg flex items-center justify-center overflow-hidden hover:opacity-80 transition-opacity"
+          >
+            <img 
+              src={categories.bottom[outfit.bottom]?.image} 
+              alt={categories.bottom[outfit.bottom]?.name || 'Bottom'}
+              style={{ maxHeight: '100%', maxWidth: '100%', width: 'auto', height: 'auto' }}
+              className="object-contain rounded-lg"
+            />
+          </button>
+        ) : (
+          <div className="w-full h-full rounded-lg flex items-center justify-center bg-white/20 backdrop-blur-sm">
+            <p className="text-xs text-gray-500">No bottoms for this weather</p>
+          </div>
+        )}
         {/* Arrow Buttons */}
         <button
           onClick={(e) => { e.stopPropagation(); cycleCategory('bottom', -1); }}
@@ -157,19 +220,25 @@ const OutfitPickerPage = () => {
       </div>
 
       {/* Shoe Selection - 20% of available height */}
-      <div className="relative w-full" style={{ height: '15%' }}>
-        <button
-          onClick={() => cycleCategory('shoe')}
-          style={{ filter: 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4))' }}
-          className="w-full h-full rounded-lg flex items-center justify-center overflow-hidden hover:opacity-80 transition-opacity"
-        >
-          <img 
-            src={categories.shoe[outfit.shoe]} 
-            alt={`Shoe ${outfit.shoe + 1}`}
-            style={{ maxHeight: '100%', maxWidth: '100%', width: 'auto', height: 'auto' }}
-            className="object-contain rounded-lg"
-          />
-        </button>
+      <div className="relative w-full" style={{ height: '12%' }}>
+        {categories.shoe.length > 0 ? (
+          <button
+            onClick={() => cycleCategory('shoe')}
+            style={{ filter: 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 8px rgba(255, 255, 255, 0.4))' }}
+            className="w-full h-full rounded-lg flex items-center justify-center overflow-hidden hover:opacity-80 transition-opacity"
+          >
+            <img 
+              src={categories.shoe[outfit.shoe]?.image} 
+              alt={categories.shoe[outfit.shoe]?.name || 'Shoe'}
+              style={{ maxHeight: '100%', maxWidth: '100%', width: 'auto', height: 'auto' }}
+              className="object-contain rounded-lg"
+            />
+          </button>
+        ) : (
+          <div className="w-full h-full rounded-lg flex items-center justify-center bg-white/20 backdrop-blur-sm">
+            <p className="text-xs text-gray-500">No shoes for this weather</p>
+          </div>
+        )}
         {/* Arrow Buttons */}
         <button
           onClick={(e) => { e.stopPropagation(); cycleCategory('shoe', -1); }}
