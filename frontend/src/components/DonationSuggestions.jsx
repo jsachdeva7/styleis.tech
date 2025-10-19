@@ -56,14 +56,14 @@ const DonationSuggestions = ({ onShowBasket }) => {
       {/* Popup Above Card */}
       {showPopup && (
         <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-white rounded-lg px-6 py-2 shadow-lg border border-gray-200 min-w-[200px]">
+          <div className="bg-white/60 backdrop-blur-md rounded-lg px-6 py-2 shadow-lg border border-gray-200 min-w-[200px]">
             <p className="text-base font-medium text-gray-800 whitespace-nowrap">{popupMessage}</p>
           </div>
         </div>
       )}
 
       {/* Clothing Item Card */}
-      <div className="w-80 h-80 bg-white rounded-xl shadow-lg overflow-hidden mb-6 p-4">
+      <div className="w-80 h-80 bg-white/40 backdrop-blur-md rounded-xl shadow-lg overflow-hidden mb-6 p-4">
         <img 
           src={item.image} 
           alt={item.displayName}
@@ -82,13 +82,13 @@ const DonationSuggestions = ({ onShowBasket }) => {
       <div className="flex gap-4 mb-4">
         <button
           onClick={handleKeep}
-          className="px-6 py-2 bg-white border-2 border-[rgb(0,120,86)] text-[rgb(0,120,86)] rounded-lg hover:bg-[rgb(245,237,223)] transition-colors duration-200 font-medium"
+          className="px-6 py-2 bg-white/40 backdrop-blur-md text-[rgb(0,120,86)] rounded-lg hover:bg-white/60 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
         >
           Keep
         </button>
         <button
           onClick={handleDonate}
-          className="px-6 py-2 bg-[rgb(0,120,86)] text-white rounded-lg hover:bg-[rgb(0,100,70)] transition-colors duration-200 font-medium"
+          className="px-6 py-2 bg-[rgb(0,120,86)] text-white rounded-lg hover:bg-[rgb(0,100,70)] shadow-sm hover:shadow-md transition-colors duration-200 font-medium"
         >
           Donate
         </button>
@@ -97,7 +97,7 @@ const DonationSuggestions = ({ onShowBasket }) => {
       {/* Basket Button */}
       <button
         onClick={onShowBasket}
-        className="px-6 py-2 bg-white border-2 border-[rgb(0,120,86)] text-[rgb(0,120,86)] rounded-lg hover:bg-[rgb(245,237,223)] transition-colors duration-200 font-medium"
+        className="px-6 py-2 bg-white/40 backdrop-blur-md text-[rgb(0,120,86)] rounded-lg hover:bg-white/60 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
       >
         See donation basket 🧺
       </button>

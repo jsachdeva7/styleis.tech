@@ -43,7 +43,7 @@ const DonationBasket = ({ onBackToSuggestions }) => {
       {/* Popup */}
       {showPopup && (
         <div className="fixed bottom-36 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-white rounded-lg px-6 py-3 shadow-lg border border-gray-200 min-w-[280px]">
+          <div className="bg-white/60 backdrop-blur-md rounded-lg px-6 py-3 shadow-lg min-w-[280px]">
             <p className="text-base font-medium text-gray-800 text-center">
               ⭐ You're a star. You just saved ~6 lbs of CO2 emissions.
             </p>
@@ -54,16 +54,16 @@ const DonationBasket = ({ onBackToSuggestions }) => {
       <div className="flex gap-2 mb-6 justify-center">
         <button
           onClick={onBackToSuggestions}
-          className="px-4 py-2 bg-white border-2 border-[rgb(0,120,86)] text-[rgb(0,120,86)] rounded-lg hover:bg-[rgb(245,237,223)] transition-colors duration-200 font-medium"
+          className="px-4 py-2 bg-white/40 backdrop-blur-md text-[rgb(0,120,86)] rounded-lg hover:bg-white/60 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
         >
         👉 Suggestions
         </button>
         <button
           onClick={() => setShowLocations(true)}
-          className="px-4 py-2 bg-white border-2 border-[rgb(0,120,86)] text-[rgb(0,120,86)] rounded-lg hover:bg-[rgb(245,237,223)] transition-colors duration-200 font-medium flex items-center gap-2"
+          className="px-4 py-2 bg-white/40 backdrop-blur-md text-[rgb(0,120,86)] rounded-lg hover:bg-white/60 shadow-sm hover:shadow-md transition-all duration-200 font-medium flex items-center gap-2"
         >
           <span>📍</span>
-          <span>Plan a Trip</span>
+          <span>Plan a Donation</span>
         </button>
       </div>
  
@@ -77,10 +77,10 @@ const DonationBasket = ({ onBackToSuggestions }) => {
         ) : (
           <div className="space-y-4 pb-6">
             {donatedItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+              <div key={item.id} className="bg-white/40 backdrop-blur-md rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
                 <div className="flex items-center gap-4 mb-3">
                   {/* Clothing Preview */}
-                  <div className="w-16 h-16 p-2 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                  <div className="w-16 h-16 p-2 bg-white/30 rounded-lg overflow-hidden flex-shrink-0">
                     <img 
                       src={item.image} 
                       alt={item.displayName}
@@ -90,16 +90,16 @@ const DonationBasket = ({ onBackToSuggestions }) => {
 
                   {/* Item Info */}
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-800 mb-1">{item.displayName}</h3>
-                    <p className="text-sm text-gray-700 font-medium">
-                      Used <span className="text-[rgb(0,120,86)] font-semibold">{item.usage} times in the past six months</span>
+                    <h3 className="font-medium mb-1">{item.displayName}</h3>
+                    <p className="text-sm text-gray-600 font-medium">
+                      Used {item.usage} times in the past six months
                     </p>
                   </div>
 
                   {/* Move to Closet Button */}
                   <button
                     onClick={() => handleMoveToCloset(item.id)}
-                    className="border border-[rgb(0,120,86)] text-[rgb(0,120,86)] rounded-lg px-3 py-2 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 flex-shrink-0 hover:scale-105"
+                    className="bg-white/40 backdrop-blur-md text-[rgb(0,120,86)] rounded-lg px-3 py-2 flex flex-col items-center justify-center gap-0.5 transition-all duration-200 flex-shrink-0 hover:bg-white/60 shadow-sm hover:shadow-md"
                     title="Move back to closet"
                   >
                     <span className="text-lg leading-none mb-1.5">🚪</span>
@@ -110,7 +110,7 @@ const DonationBasket = ({ onBackToSuggestions }) => {
                 {/* Confirm Donation Button */}
                 <button
                   onClick={() => handleConfirmDonation(item.id)}
-                  className="w-full py-2 bg-[rgb(245,237,223)] text-gray-800 rounded-lg hover:bg-[rgb(235,227,213)] transition-colors duration-200 font-medium text-sm"
+                  className="w-full py-2 bg-white/40 backdrop-blur-md text-[rgb(0,120,86)] rounded-lg hover:bg-white/60 shadow-sm hover:shadow-md transition-all duration-200 font-medium text-sm"
                 >
                   Confirm Donation
                 </button>

@@ -55,7 +55,7 @@ const Closet = ({ onAddItem }) => {
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-4 pb-6">
           {categories.map((category) => (
-            <div key={category.key} className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+            <div key={category.key} className="bg-white/40 backdrop-blur-md rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
               {/* Category Label */}
               <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                 <span>{category.emoji}</span>
@@ -67,7 +67,7 @@ const Closet = ({ onAddItem }) => {
                 {closetItems[category.key].map((item) => (
                   <div
                     key={item.id}
-                    className="flex-shrink-0 w-16 h-16 bg-[rgb(245,237,223)] rounded-lg border border-gray-200 p-2 hover:shadow-md transition-shadow duration-200 cursor-pointer"
+                    className="flex-shrink-0 w-16 h-16 bg-white/30 backdrop-blur-sm rounded-lg p-2 hover:bg-white/50 hover:shadow-md transition-all duration-200 cursor-pointer"
                   >
                     <img
                       src={item.image}
@@ -79,9 +79,9 @@ const Closet = ({ onAddItem }) => {
                 {/* Add Item Button */}
                 <button
                   onClick={() => onAddItem(category.key)}
-                  className="flex-shrink-0 w-16 h-16 bg-[rgb(245,237,223)] rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-[rgb(0,120,86)] hover:bg-[rgb(235,227,213)] transition-all duration-200 cursor-pointer"
+                  className="flex-shrink-0 w-16 h-16 bg-white/30 backdrop-blur-sm rounded-lg border-2 border-dashed border-gray-400 flex items-center justify-center hover:border-[rgb(0,120,86)] hover:bg-white/50 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
                 >
-                  <span className="text-2xl text-gray-400 leading-none">+</span>
+                  <span className="text-2xl text-[rgb(0,120,86)] leading-none">+</span>
                 </button>
               </div>
             </div>

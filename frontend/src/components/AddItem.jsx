@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 const AddItem = ({ onBack, category }) => {
   const [image, setImage] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
   const [name, setName] = useState('');
   const [condition, setCondition] = useState('');
   const [price, setPrice] = useState('');
@@ -9,6 +10,7 @@ const AddItem = ({ onBack, category }) => {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImage(reader.result);
@@ -17,16 +19,52 @@ const AddItem = ({ onBack, category }) => {
     }
   };
 
-  const handleSave = () => {
-    // TODO: Save item to closet
-    console.log('Saving item:', { name, condition, price, category, image });
-    onBack();
+  const handleSave = async () => {
+    // Validate fields
+    if (!name || !condition || !price || !imageFile) {
+      alert('Please fill in all fields and upload an image');
+      return;
+    }
+
+    // Map condition to number
+    const conditionMap = { 'New': 1, 'Used': 2, 'Worn': 3 };
+    const conditionNum = conditionMap[condition];
+
+    // Map price to number (count dollar signs)
+    const priceRangeNum = price.length;
+
+    // Create FormData
+    const formData = new FormData();
+    formData.append('name', name);
+    formData.append('condition', conditionNum);
+    formData.append('priceRange', priceRangeNum);
+    formData.append('category', category);
+    formData.append('image', imageFile);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/clothes', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('Item saved successfully:', data.item);
+        onBack();
+      } else {
+        alert('Error saving item: ' + (data.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error saving item:', error);
+      alert('Failed to save item. Please try again.');
+    }
   };
 
   return (
     <div className="p-4 h-full flex flex-col items-center justify-center relative">
       {/* Image Upload Card */}
-      <div className="w-64 h-64 p-4 bg-white rounded-xl shadow-lg overflow-hidden mb-6 relative cursor-pointer group">
+      <div className="w-64 h-64 p-4 bg-white/40 backdrop-blur-md rounded-xl shadow-lg hover:shadow-xl overflow-hidden mb-6 relative cursor-pointer group transition-shadow duration-200">
         <input
           type="file"
           accept="image/*"
@@ -60,7 +98,7 @@ const AddItem = ({ onBack, category }) => {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Item name..."
-          className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[rgb(0,120,86)] text-base"
+          className="w-full px-4 py-2 bg-white/40 backdrop-blur-md rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(0,120,86)] shadow-sm hover:shadow-md transition-all duration-200 text-base"
         />
       </div>
 
@@ -72,10 +110,10 @@ const AddItem = ({ onBack, category }) => {
             <button
               key={cond}
               onClick={() => setCondition(cond)}
-              className={`flex-1 px-3 py-2 rounded-lg border-2 transition-all duration-200 font-medium text-sm ${
+              className={`flex-1 px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm shadow-sm hover:shadow-md ${
                 condition === cond
-                  ? 'bg-white text-gray-700 border-[rgb(0,120,86)]'
-                  : 'bg-white text-gray-700 border-gray-300 hover:border-[rgb(0,120,86)]'
+                  ? 'bg-white/60 backdrop-blur-md text-gray-700 border-2 border-[rgb(0,120,86)]'
+                  : 'bg-white/40 backdrop-blur-md text-gray-700 hover:bg-white/60'
               }`}
             >
               {cond}
@@ -92,10 +130,10 @@ const AddItem = ({ onBack, category }) => {
             <button
               key={priceRange}
               onClick={() => setPrice(priceRange)}
-              className={`flex-1 px-3 py-2 rounded-lg border-2 transition-all duration-200 font-medium text-base text-sm ${
+              className={`flex-1 px-3 py-2 rounded-lg transition-all duration-200 font-medium text-sm shadow-sm hover:shadow-md ${
                 price === priceRange
-                  ? 'bg-white text-gray-700 border-[rgb(0,120,86)]'
-                  : 'bg-white text-gray-700 border-gray-300 hover:border-[rgb(0,120,86)]'
+                  ? 'bg-white/60 backdrop-blur-md text-gray-700 border-2 border-[rgb(0,120,86)]'
+                  : 'bg-white/40 backdrop-blur-md text-gray-700 hover:bg-white/60'
               }`}
             >
               {priceRange}
@@ -108,13 +146,13 @@ const AddItem = ({ onBack, category }) => {
       <div className="flex gap-4 pb-8">
         <button
           onClick={onBack}
-          className="px-6 py-2 bg-white border-2 border-[rgb(0,120,86)] text-[rgb(0,120,86)] rounded-lg hover:bg-[rgb(245,237,223)] transition-colors duration-200 font-medium"
+          className="px-6 py-2 bg-white/40 backdrop-blur-md text-[rgb(0,120,86)] rounded-lg hover:bg-white/60 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
         >
           Cancel
         </button>
         <button
           onClick={handleSave}
-          className="px-6 py-2 bg-[rgb(0,120,86)] text-white rounded-lg hover:bg-[rgb(0,100,70)] transition-colors duration-200 font-medium"
+          className="px-6 py-2 bg-[rgb(0,120,86)] text-white rounded-lg hover:bg-[rgb(0,100,70)] shadow-sm hover:shadow-md transition-colors duration-200 font-medium"
         >
           Save Item
         </button>
