@@ -1,12 +1,12 @@
-from flask import Flask
-from flask_cors import CORS
-from routes import home_bp
+from flask import Flask, request, send_file, jsonify
+from rembg import remove
+from PIL import Image
+import io
+from werkzeug.utils import secure_filename
 
-app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
-CORS(app)
+app = Flask(__name__)
 
-# Register blueprints
-app.register_blueprint(home_bp)
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+@app.route("/", methods=["GET"])
+def home():
+    return "Hello, world!"
