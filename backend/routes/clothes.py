@@ -232,13 +232,13 @@ def get_jail_clothes():
             data = doc.to_dict()
             # Firestore may store numbers as int or float, so check == 1
             if data.get("in_jail", 0) == 1:
+
                 # Optionally add doc id
                 data["id"] = doc.id
                 jail_clothes.append(data)
-        return "jail_clothes:" + ", ".join([json.dumps(item) for item in jail_clothes]), 200
+        return jsonify({"jail_clothes": jail_clothes}), 200
     except Exception as e:
         import traceback
-        print("🔥 ERROR TRACEBACK 🔥")
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
