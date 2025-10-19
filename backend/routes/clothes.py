@@ -186,10 +186,29 @@ def add_clothing_item():
 
 @clothes_bp.route("", methods=["GET"])
 def get_all_clothes():
-   """Fetch all clothes - frontend will filter by category"""
-   print("GET /api/clothes hit")
-   return jsonify({"message": "GET /api/clothes hit"})
+    """Fetch all clothes and return as JSON"""
+    print("GET /api/clothes hit")
 
+    try:
+        # Fetch all documents from the 'clothes' collection
+        clothes_ref = db.collection("clothes")
+        docs = clothes_ref.stream()
+
+        clothes_list = []
+        for doc in docs:
+            item = doc.to_dict()
+            item["id"] = doc.id  # include Firestore document ID
+            clothes_list.append(item)
+
+        return jsonify({
+            "success": True,
+            "count": len(clothes_list),
+            "data": clothes_list
+        }), 200
+
+    except Exception as e:
+        print("Error fetching clothes:", e)
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @clothes_bp.route("/ootd", methods=["POST"])
