@@ -2,8 +2,11 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Home endpoint
-@app.route("/")
+
+@app.route("/", methods=["GET"])
+
+@app.route("/donation_centers", methods=["POST"])
+
 def home():
     return "Flask app is running!"
 
