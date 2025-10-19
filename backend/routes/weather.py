@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 import requests
+import geocoder
 import os
 
 weather_bp = Blueprint('weather', __name__)
@@ -14,7 +15,13 @@ def get_weather():
 
     # Validate parameters
     if not lat or not lon:
-        return jsonify({"error": "Missing latitude or longitude"}), 400
+        try:
+            g = geocoder.ip('me')  # approximate location from public IP
+            lat, lon = g.latlng
+            print(f"Detected location from IP: {lat}, {lon}")
+        except Exception as e:
+            return jsonify({"error": f"Could not detect location: {str(e)}"}), 500
+        #return jsonify({"error": "Missing latitude or longitude"}), 400
 
     api_key = "3521e8572db36311ea9db2471a556c51"
     if not api_key:
@@ -36,7 +43,7 @@ def get_weather():
 
         return jsonify({
             "location": city,
-            "temperature": temperature
+            "temperature": round(((temperature * 9/5) + 32), 1)  # Convert to Fahrenheit
         })
 
     except Exception as e:
