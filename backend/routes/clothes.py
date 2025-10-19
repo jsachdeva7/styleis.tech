@@ -171,14 +171,11 @@ def add_clothing_item():
             "link": s3_url,
             "category": category,
             "cost": cost,
-        
-
-            
+                  
         }), 200
 
     except Exception as e:
         import traceback
-        print("🔥 ERROR TRACEBACK 🔥")
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
@@ -191,6 +188,9 @@ def get_all_clothes():
    """Fetch all clothes - frontend will filter by category"""
    print("GET /api/clothes hit")
    return jsonify({"message": "GET /api/clothes hit"})
+
+
+
 @clothes_bp.route("/ootd", methods=["POST"])
 def create_ootd():
    """Create outfit of the day with selected clothing IDs"""
