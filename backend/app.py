@@ -5,7 +5,7 @@ app = Flask(__name__)
 
 @app.route("/", methods=["GET"])
 
-@app.route("/donation_centers", methods=["POST"])
+@app.route("/donation_centers", methods=["GET"])
 
 
 def home():
