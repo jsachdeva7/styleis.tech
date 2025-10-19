@@ -93,12 +93,37 @@ def add_clothing_item():
     
     cost = request.form.get("cost")
     item_name = request.form.get("item_name")
-
+    sub_category = request.form.get("sub_category")
     condition = request.form.get("condition", "worn").lower()  # default to 'worn'
 
     condition_numeric = CONDITION_MAPPING.get(condition, 1)
 
+    min_temp_map = {
+    "layers": 20,
+    "shoes": -100,
+    "long pants": 20,
+    "shorts": 61,
+    "shirts": 61,
+    "headwear": -100,
+    "winterwear": -100
+}
+
+    max_temp_map = {
+        "layers": 60,
+        "shoes": 100,
+        "long pants": 60,
+        "shorts": 100,
+        "shirts": 100,
+        "headwear": 100,
+        "winterwear": 19
+    }
+    min_temp= min_temp_map.get(sub_category)
+    max_temp= max_temp_map.get(sub_category)
+
+
     input_data = file.read()
+
+
 
     try:
         # Step 1: Remove background
