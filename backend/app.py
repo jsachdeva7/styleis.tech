@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from routes import home_bp, remove_bg_bp, donations_bp
+from routes import home_bp, remove_bg_bp, clothes_bp, weather_bp, locations_bp
 
 app = Flask(__name__)
 CORS(app)
@@ -8,7 +8,9 @@ CORS(app)
 # Register blueprints
 app.register_blueprint(home_bp)
 app.register_blueprint(remove_bg_bp, url_prefix='/api/images')
-app.register_blueprint(donations_bp, url_prefix='/api/donations')
+app.register_blueprint(clothes_bp, url_prefix='/api/clothes')
+app.register_blueprint(weather_bp, url_prefix='/api/weather')
+app.register_blueprint(locations_bp, url_prefix='/api/locations')
 
 # Example POST endpoint
 @app.route("/echo", methods=["POST"])
