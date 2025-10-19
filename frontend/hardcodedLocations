@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Donation Centers Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    li { margin-bottom: 15px; border-bottom: 1px solid #ccc; padding-bottom: 10px; list-style: none; }
+  </style>
+</head>
+<body>
+
+<h1>Nearby Donation Centers (Hardcoded Coordinates)</h1>
+<ul id="results"></ul>
+
+<script>
+const resultsList = document.getElementById('results');
+
+// Hardcoded coordinates for testing (UT Austin)
+const LAT = 29.889000;
+const LON = -97.934547;
+
+// Immediately send request when page loads
+(async () => {
+    try {
+        const response = await fetch(`http://127.0.0.1:5000/api/locations?lat=${LAT}&lon=${LON}`);
+        const data = await response.json();
+
+        if (!data.length) {
+            resultsList.innerHTML = "<li>No donation centers found nearby.</li>";
+            return;
+        }
+
+        data.forEach(center => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+                <strong>${center.name}</strong><br>
+                Address: ${center.address}<br>
+                Distance: ${center.distance_miles} miles
+            `;
+            resultsList.appendChild(li);
+        });
+
+    } catch (err) {
+        console.error(err);
+        resultsList.innerHTML = "<li>Error fetching donation centers.</li>";
+    }
+})();
+</script>
+
+</body>
+</html>
