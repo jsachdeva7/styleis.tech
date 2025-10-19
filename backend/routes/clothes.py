@@ -8,6 +8,44 @@ import boto3
 from google.oauth2 import service_account
 from google.cloud import firestore as gc_firestore
 from dotenv import load_dotenv
+from datetime import date, timedelta
+import pandas as pd
+import requests
+
+def calculate_applicable_days(min_temp, max_temp):
+    url = "https://meteostat.p.rapidapi.com/point/daily"
+    # Get yesterday's date
+    end_date = date.today() - timedelta(days=1)
+
+    # Get one year before yesterday
+    start_date = end_date - timedelta(days=365)
+
+    # Format as yyyy-mm-dd
+    start_date = start_date.strftime("%Y-%m-%d")
+    end_date = end_date.strftime("%Y-%m-%d")
+
+
+    querystring = {"lat":"52.5244","lon":"13.4105","start":start_date,"end":end_date}
+
+    headers = {
+        "x-rapidapi-key": "cea94ee8d2msha44e92992b315a3p10f03cjsn34baa9685b74",
+        "x-rapidapi-host": "meteostat.p.rapidapi.com"
+    }
+
+    response = requests.get(url, headers=headers, params=querystring)
+
+
+    weatherdata = pd.DataFrame(response.json()['data'])
+    weatherdata['temperature_fahrenheit'] = weatherdata['tavg'] * 9/5 + 32 
+    counter = 0
+    for i, row in weatherdata.iterrows():
+        if row['temperature_fahrenheit'] >= min_temp and row['temperature_fahrenheit'] <= max_temp:
+            counter += 1
+    
+    return counter / 366
+
+
+
 
 # Load environment variables from .env
 load_dotenv()
@@ -96,9 +134,9 @@ def add_clothing_item():
             "marked_for_donation": False,
             "condition": condition_numeric, 
             "item_name": item_name, 
-            "min_temp": min_temp,
-            "max_temp": max_temp,
-            "applicable_days": "that's just a fucking useless feature! "
+            "min_temp": int(min_temp),
+            "max_temp": int(max_temp),
+            "applicable_days": calculate_applicable_days(int(min_temp), int(max_temp))
         })
 
         return jsonify({
