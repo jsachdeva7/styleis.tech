@@ -20,6 +20,7 @@ def calculate_applicable_days(min_temp, max_temp):
     # Get one year before yesterday
     start_date = end_date - timedelta(days=365)
 
+
     # Format as yyyy-mm-dd
     start_date = start_date.strftime("%Y-%m-%d")
     end_date = end_date.strftime("%Y-%m-%d")
@@ -89,6 +90,7 @@ def add_clothing_item():
         return jsonify({"error": "Empty filename"}), 400
 
     category = request.form.get("category")
+    
     cost = request.form.get("cost")
     item_name = request.form.get("item_name")
     min_temp = request.form.get("min_temp")
@@ -125,18 +127,21 @@ def add_clothing_item():
         # Step 4: Save metadata to Firestore
         doc_ref = db.collection("clothes").document(image_id)
         doc_ref.set({
+            "clothing_id": uuid.uuid4(), 
             "link": s3_url,
             "category": category,
             "cost": cost,
             "condition": condition_numeric,
-            "usage_count": 0,
-            "in_jail": False,
-            "marked_for_donation": False,
+            "frequency": 0,
+            "in_jail": 0,
+            "marked_for_donation": 0,
             "condition": condition_numeric, 
             "item_name": item_name, 
             "min_temp": int(min_temp),
             "max_temp": int(max_temp),
-            "applicable_days": calculate_applicable_days(int(min_temp), int(max_temp))
+            "created_date": date.today(),
+            "applicable_days": calculate_applicable_days(int(min_temp), int(max_temp)), 
+            "last_worn_date": None
         })
 
         return jsonify({
