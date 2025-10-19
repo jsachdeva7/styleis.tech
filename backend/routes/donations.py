@@ -39,10 +39,35 @@ def fetch_clothing_donations(lat, lon, radius, query):
         return []
 
     # Build Overpass query string
-    overpass_query = f"[out:json][timeout:25];(" + ";".join(f"{el}(around:{radius},{lat},{lon})" for el in elements) + ");out center;"
+    # Format: [out:json][timeout:25];(node["key"="value"](around:radius,lat,lon);way[...];);out center;
+    query_parts = [f"{el}(around:{int(radius)},{lat},{lon})" for el in elements]
+    overpass_query = f'[out:json][timeout:25];({";".join(query_parts)};);out center;'
+    
+    print(f"Overpass query being sent: {overpass_query}")  # Debug logging
+    print(f"Query length: {len(overpass_query)} chars, Radius: {radius}m")  # Debug
 
-    resp = requests.post(OVERPASS_URL, data=overpass_query, headers={"Content-Type": "text/plain"})
-    data = resp.json()
+    try:
+        resp = requests.post(OVERPASS_URL, data=overpass_query, headers={"Content-Type": "text/plain"}, timeout=30)
+        
+        # Check if request was successful
+        if resp.status_code != 200:
+            print(f"Overpass API returned status code: {resp.status_code}")
+            print(f"Full response: {resp.text}")  # Print full response to see error details
+            return []
+        
+        # Check if response has content
+        if not resp.text or resp.text.strip() == "":
+            print("Overpass API returned empty response")
+            return []
+        
+        data = resp.json()
+    except requests.exceptions.JSONDecodeError as e:
+        print(f"Failed to parse Overpass API response as JSON: {e}")
+        print(f"Response text: {resp.text[:500]}")  # Print first 500 chars for debugging
+        return []
+    except requests.exceptions.RequestException as e:
+        print(f"Request to Overpass API failed: {e}")
+        return []
 
     results = []
     for el in data.get("elements", []):

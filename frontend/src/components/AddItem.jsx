@@ -1,11 +1,25 @@
 import { useState } from 'react';
 
-const AddItem = ({ onBack, category }) => {
+const AddItem = ({ onBack, category: subcategory }) => {
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [name, setName] = useState('');
   const [condition, setCondition] = useState('');
   const [price, setPrice] = useState('');
+
+  // Map subcategories to parent categories
+  const getCategory = (subcategory) => {
+    const categoryMap = {
+      'headwear': 'hat',
+      'shirts': 'upper',
+      'layers': 'upper',
+      'winterwear': 'upper',
+      'shorts': 'lower',
+      'longPants': 'lower',
+      'shoes': 'shoes'
+    };
+    return categoryMap[subcategory] || 'upper'; // default to 'upper' if not found
+  };
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -26,19 +40,22 @@ const AddItem = ({ onBack, category }) => {
       return;
     }
 
-    // Map condition to number
-    const conditionMap = { 'New': 1, 'Used': 2, 'Worn': 3 };
-    const conditionNum = conditionMap[condition];
+    // Map condition to lowercase string (backend expects "new", "used", or "worn")
+    const conditionStr = condition.toLowerCase();
 
     // Map price to number (count dollar signs)
-    const priceRangeNum = price.length;
+    const priceNum = price.length;
 
-    // Create FormData
+    // Get the parent category from subcategory
+    const category = getCategory(subcategory);
+
+    // Create FormData with backend-expected field names
     const formData = new FormData();
-    formData.append('name', name);
-    formData.append('condition', conditionNum);
-    formData.append('priceRange', priceRangeNum);
-    formData.append('category', category);
+    formData.append('item_name', name);  // Backend expects 'item_name'
+    formData.append('condition', conditionStr);  // Backend expects lowercase string
+    formData.append('cost', priceNum);  // Backend expects 'cost'
+    formData.append('category', category);  // Parent category (upper, lower, shoes, hat)
+    formData.append('subcategory', subcategory);  // Specific subcategory (shirts, longPants, etc.)
     formData.append('image', imageFile);
 
     try {
@@ -49,8 +66,9 @@ const AddItem = ({ onBack, category }) => {
 
       const data = await response.json();
       
-      if (data.success) {
-        console.log('Item saved successfully:', data.item);
+      if (response.ok) {
+        console.log('Item saved successfully:', data);
+        alert('Item added successfully!');
         onBack();
       } else {
         alert('Error saving item: ' + (data.error || 'Unknown error'));
