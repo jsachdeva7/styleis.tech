@@ -1,13 +1,16 @@
+from flask import Blueprint, request, jsonify, send_file
+from rembg import remove
+from PIL import Image
+import io
 
-from flask import Blueprint, jsonify, send_from_directory
-import os
-import requests
+remove_bg_bp = Blueprint("remove_bg_bp", __name__)
 
-@app.route("/remove-bg", methods=["POST "])
+@remove_bg_bp.route("/remove-bg", methods=["GET", "POST"])
 def remove_bg():
+    # Check if file part exists
     if "image" not in request.files:
         return jsonify({"error": "No file part"}), 400
-    
+
     file = request.files["image"]
     if file.filename == "":
         return jsonify({"error": "No selected file"}), 400
@@ -28,6 +31,3 @@ def remove_bg():
         return send_file(img_io, mimetype="image/png")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-if __name__ == "__main__":
-    app.run(debug=True)
