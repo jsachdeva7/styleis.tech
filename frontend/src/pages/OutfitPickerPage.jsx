@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons';
+import { fetchWeather } from '../api/weatherApi';
 
 // Import assets
 import blueCap from '../assets/hats/blue_cap.png';
@@ -13,6 +15,13 @@ import dunkLows from '../assets/shoes/dunk lows.png';
 import dunkLows2 from '../assets/shoes/dunk lows 2.png';
 
 const OutfitPickerPage = () => {
+  // Fetch weather data with caching
+  const { data: weather, isLoading: weatherLoading } = useQuery({
+    queryKey: ['weather'],
+    queryFn: () => fetchWeather(),
+    staleTime: 10 * 60 * 1000, // Weather data fresh for 10 minutes
+    retry: 1,
+  });
   const [outfit, setOutfit] = useState({
     hat: 0,
     shirt: 0,
@@ -52,13 +61,24 @@ const OutfitPickerPage = () => {
     <div className="px-2 py-8 h-full flex flex-col relative">
       {/* Weather Display */}
       <div className="absolute top-2 right-2 bg-white/40 backdrop-blur-md rounded-lg px-2 py-0.5 shadow-sm">
-        <div className="flex items-center gap-1">
-          {/* Weather Icon */}
-          <div className="text-sm">☀️</div>
-          
-          {/* Current Temperature */}
-          <div className="text-xs font-medium text-gray-800">72°F</div>
-        </div>
+        {weatherLoading ? (
+          <div className="flex items-center gap-1 px-1">
+            <div className="text-xs text-gray-600">Loading...</div>
+          </div>
+        ) : weather ? (
+          <div className="flex items-center gap-1">
+            {/* Weather Icon */}
+            <div className="text-sm">{weather.weather_emoji}</div>
+            
+            {/* Current Temperature */}
+            <div className="text-xs font-medium text-gray-800">{weather.temperature}°F</div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1">
+            <div className="text-sm">🌤️</div>
+            <div className="text-xs font-medium text-gray-800">--°F</div>
+          </div>
+        )}
       </div>
       {/* Hat Selection - 15% of available height */}
       <div className="relative w-full" style={{ height: '10%' }}>
