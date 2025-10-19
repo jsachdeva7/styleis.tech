@@ -40,14 +40,34 @@ def get_weather():
         # Extract useful info
         temperature = data["main"]["temp"]
         city = data.get("name", "Unknown")
+        weather_main = data["weather"][0]["main"] if data.get("weather") else "Clear"
+        weather_description = data["weather"][0]["description"] if data.get("weather") else ""
+        
+        # Map weather conditions to emojis
+        weather_emoji_map = {
+            "Clear": "☀️",
+            "Clouds": "☁️",
+            "Rain": "🌧️",
+            "Drizzle": "🌦️",
+            "Thunderstorm": "⛈️",
+            "Snow": "❄️",
+            "Mist": "🌫️",
+            "Fog": "🌫️",
+            "Haze": "🌫️"
+        }
+        weather_emoji = weather_emoji_map.get(weather_main, "🌤️")
 
         return jsonify({
+            "success": True,
             "location": city,
-            "temperature": round(((temperature * 9/5) + 32), 1)  # Convert to Fahrenheit
+            "temperature": round((temperature * 9/5) + 32),  # Convert to Fahrenheit and round to integer
+            "weather_main": weather_main,
+            "weather_description": weather_description,
+            "weather_emoji": weather_emoji
         })
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
     #print("GET /api/weather hit")
