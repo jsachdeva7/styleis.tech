@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from datetime import date, timedelta
 import pandas as pd
 import requests
+import json
 
 def calculate_applicable_days(min_temp, max_temp):
     url = "https://meteostat.p.rapidapi.com/point/daily"
@@ -181,7 +182,6 @@ def add_clothing_item():
 
     except Exception as e:
         import traceback
-        print("🔥 ERROR TRACEBACK 🔥")
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
@@ -191,9 +191,31 @@ def add_clothing_item():
 
 @clothes_bp.route("", methods=["GET"])
 def get_all_clothes():
-   """Fetch all clothes - frontend will filter by category"""
-   print("GET /api/clothes hit")
-   return jsonify({"message": "GET /api/clothes hit"})
+    """Fetch all clothes and return as JSON"""
+    print("GET /api/clothes hit")
+
+    try:
+        # Fetch all documents from the 'clothes' collection
+        clothes_ref = db.collection("clothes")
+        docs = clothes_ref.stream()
+
+        clothes_list = []
+        for doc in docs:
+            item = doc.to_dict()
+            item["id"] = doc.id  # include Firestore document ID
+            clothes_list.append(item)
+
+        return jsonify({
+            "success": True,
+            "count": len(clothes_list),
+            "data": clothes_list
+        }), 200
+
+    except Exception as e:
+        print("Error fetching clothes:", e)
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @clothes_bp.route("/ootd", methods=["POST"])
 def create_ootd():
    """Create outfit of the day with selected clothing IDs"""
@@ -204,9 +226,26 @@ def create_ootd():
 
 @clothes_bp.route("/jail", methods=["GET"])
 def get_jail_clothes():
-   """Get clothes in 'jail' - the five least used items"""
-   print("GET /api/clothes/jail hit")
-   return jsonify({"message": "GET /api/clothes/jail hit"})
+    """Get clothes in 'jail' - items where in_jail == 1"""
+    print("GET /api/clothes/jail hit")
+    try:
+        # Fetch all clothes documents
+        clothes_ref = db.collection("clothes")
+        docs = clothes_ref.stream()
+        jail_clothes = []
+        for doc in docs:
+            data = doc.to_dict()
+            # Firestore may store numbers as int or float, so check == 1
+            if data.get("in_jail", 0) == 1:
+                # Optionally add doc id
+                data["id"] = doc.id
+                jail_clothes.append(data)
+        return "jail_clothes:" + ", ".join([json.dumps(item) for item in jail_clothes]), 200
+    except Exception as e:
+        import traceback
+        print("🔥 ERROR TRACEBACK 🔥")
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 
 @clothes_bp.route("/jail/takeout", methods=["POST"])
