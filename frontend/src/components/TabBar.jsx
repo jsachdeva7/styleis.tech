@@ -4,8 +4,8 @@ const TabBar = () => {
   const location = useLocation();
 
   const tabs = [
-    { path: '/', label: 'Home', icon: '🏠' },
-    { path: '/outfit-picker', label: 'Outfits', icon: '👕' },
+    { path: '/', label: 'Closet', icon: '🚪' },
+    { path: '/outfit-picker', label: 'OOTD', icon: '👕' },
     { path: '/donation', label: 'Donate', icon: '💝' }
   ];
 
