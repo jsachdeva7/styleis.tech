@@ -16,7 +16,7 @@ def get_weather():
     if not lat or not lon:
         return jsonify({"error": "Missing latitude or longitude"}), 400
 
-    api_key = os.getenv("OPENWEATHER_API_KEY")
+    api_key = "3521e8572db36311ea9db2471a556c51"
     if not api_key:
         return jsonify({"error": "Missing API key"}), 500
 
@@ -43,6 +43,6 @@ def get_weather():
         return jsonify({"error": str(e)}), 500
 
 
-    print("GET /api/weather hit")
-    return jsonify({"message": "GET /api/weather hit"})
+    #print("GET /api/weather hit")
+    #return jsonify({"message": "GET /api/weather hit"})
 
