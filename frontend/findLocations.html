@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Nearby Donation Centers</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    li { margin-bottom: 15px; border-bottom: 1px solid #ccc; padding-bottom: 10px; list-style: none; }
+  </style>
+</head>
+<body>
+
+<h1>Nearby Donation Centers (Using Your Location)</h1>
+<ul id="results"></ul>
+
+<script>
+const resultsList = document.getElementById('results');
+
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        console.log("User location:", lat, lon);
+
+        try {
+            const response = await fetch(`http://localhost:5000/api/locations?lat=${lat}&lon=${lon}`);
+            const data = await response.json();
+
+            console.log("Backend response:", data);
+
+            if (!data.length) {
+                resultsList.innerHTML = "<li>No donation centers found nearby.</li>";
+                return;
+            }
+
+            data.forEach(center => {
+
+                console.log("Center:", center);
+
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    <strong>${center.name}</strong><br>
+                    Address: ${center.address}<br>
+                    Distance: ${center.distance_miles} miles
+                `;
+                
+                if (center.name.toLowerCase().includes("goodwill")) {
+                li.innerHTML += `<br><img src="https://goodwillwa.org/wp-content/uploads/2024/08/shop-page-retail-image.jpg" 
+                alt="Goodwill" style="height:120px;margin-top:5px;">`;
+                } 
+                
+                else if (center.name.toLowerCase().includes("salvation army")) {
+                    li.innerHTML += `<br><img src="https://www.twincities.com/wp-content/uploads/2015/10/wpid-20150415__1-SalvationArmy_skybox.jpg?w=491" 
+                    alt="Salvation Army" style="height:120px;margin-top:5px;">`;
+                }
+                resultsList.appendChild(li);
+            });
+
+        } catch (err) {
+            console.error(err);
+            resultsList.innerHTML = "<li>Error fetching donation centers.</li>";
+        }
+
+    }, (err) => {
+        resultsList.innerHTML = `<li>Could not get location: ${err.message}</li>`;
+    });
+} else {
+    resultsList.innerHTML = "<li>Geolocation is not supported by this browser.</li>";
+}
+</script>
+
+</body>
+</html>
