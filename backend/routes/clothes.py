@@ -93,9 +93,6 @@ def add_clothing_item():
     
     cost = request.form.get("cost")
     item_name = request.form.get("item_name")
-    min_temp = request.form.get("min_temp")
-
-    max_temp = request.form.get("max_temp")
 
     condition = request.form.get("condition", "worn").lower()  # default to 'worn'
 
