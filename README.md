@@ -9,6 +9,8 @@
 Most of us own clothes we never wear — yet someone out there could really use them.  
 We built **styleis. tech** to close that loop: help people understand their real clothing habits and make donating easy, accessible, and data-driven.
 
+[Pitch Deck Slides](https://docs.google.com/presentation/d/1_nxWJoMr4TMouHLegSLR0_AsM23t3kkNrROw5Val4Gs/edit?slide=id.g39b0b2d7178_2_20#slide=id.g39b0b2d7178_2_20)
+
 ---
 
 ## 💡 What It Does
@@ -111,6 +113,7 @@ Anish Raj Pandey – Full Stack Developer
 
 This project is open-source under the MIT License
 .
+
 
 
 
