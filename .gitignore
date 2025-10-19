@@ -12,3 +12,6 @@ venv/
 # Env files
 .env
 .DS_Store
+
+
+firebaseCred.json

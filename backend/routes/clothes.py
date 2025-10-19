@@ -1,155 +1,116 @@
-from flask import Blueprint, request, jsonify
-from rembg import remove
-from PIL import Image
-import io, uuid, boto3
-from google.cloud import firestore
-
-
-import uuid
 import io
+import uuid
+import os
+
 from flask import Blueprint, request, jsonify
 from PIL import Image
 from rembg import remove
 import boto3
-import os
-
-
+from google.oauth2 import service_account
+from google.cloud import firestore as gc_firestore
 from dotenv import load_dotenv
 
+# Load environment variables from .env
+load_dotenv()
 
+clothes_bp = Blueprint("clothes", __name__)
 
+# --- Firebase Setup ---
+cred_path = 'firebaseCred.json'  # Path to your service account key file
+# Initialize Firestore client using service account credentials
+creds = service_account.Credentials.from_service_account_file(cred_path)
+db = gc_firestore.Client(credentials=creds)
 
-load_dotenv()  #
-clothes_bp = Blueprint('clothes', __name__)
-
-
-# Initialize Firestore and S3 clients
-# todo
-
-
-# Replace these with your actual IAM access keys
-
-
+# --- AWS S3 Setup ---
 aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
 aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+BUCKET_NAME = os.getenv("AWS_BUCKET_NAME")
 
-
-
-
-
-
-# Initialize an S3 client
 s3 = boto3.client(
-   "s3",
-   region_name="us-east-1",  # replace with your bucket region
-   aws_access_key_id=aws_access_key_id,
-   aws_secret_access_key=aws_secret_access_key
+    "s3",
+    region_name="us-east-1",
+    aws_access_key_id=aws_access_key_id,
+    aws_secret_access_key=aws_secret_access_key
 )
 
+# --- Condition Mapping ---
+CONDITION_MAPPING = {
+    "new": 3,
+    "used": 2,
+    "worn": 1
+}
 
-
-
-
-
-# Change this to your actual S3 bucket name
-BUCKET_NAME =  os.getenv("AWS_BUCKET_NAME")
-
-
-clothes_bp = Blueprint("clothes", __name__)  # add creds if needed
-
-
-
+# ----------------- Routes -----------------
 
 @clothes_bp.route("", methods=["POST"])
 def add_clothing_item():
-   # Replace these with your actual IAM access keys
-  
+    if "image" not in request.files:
+        return jsonify({"error": "No image uploaded"}), 400
 
+    file = request.files["image"]
+    if file.filename == "":
+        return jsonify({"error": "Empty filename"}), 400
 
-   # Initialize an S3 client
-   s3 = boto3.client(
-       "s3",
-       region_name="us-east-1",  # replace with your bucket region
-       aws_access_key_id=aws_access_key_id,
-       aws_secret_access_key=aws_secret_access_key
-   )
+    category = request.form.get("category")
+    cost = request.form.get("cost")
+    item_name = request.form.get("item_name")
+    min_temp = request.form.get("min_temp")
+    max_temp = request.form.get("max_temp")
 
+    condition = request.form.get("condition", "worn").lower()  # default to 'worn'
 
+    condition_numeric = CONDITION_MAPPING.get(condition, 1)
 
+    input_data = file.read()
 
+    try:
+        # Step 1: Remove background
+        output_data = remove(input_data)
+        output_image = Image.open(io.BytesIO(output_data))
 
+        # Step 2: Save to buffer
+        img_io = io.BytesIO()
+        output_image.save(img_io, format="PNG")
+        img_io.seek(0)
 
-   # Change this to your actual S3 bucket name
-  
-   if "image" not in request.files:
-       return jsonify({"error": "No image uploaded"}), 400
+        # Step 3: Upload to S3
+        image_id = f"{uuid.uuid4()}.png"
+        s3.upload_fileobj(
+            Fileobj=img_io,
+            Bucket=BUCKET_NAME,
+            Key=image_id,
+            ExtraArgs={'ContentType': 'image/png'}
+        )
+        s3_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{image_id}"
 
+        # Step 4: Save metadata to Firestore
+        doc_ref = db.collection("clothes").document(image_id)
+        doc_ref.set({
+            "link": s3_url,
+            "category": category,
+            "cost": cost,
+            "condition": condition_numeric,
+            "usage_count": 0,
+            "in_jail": False,
+            "marked_for_donation": False
+        })
 
-   file = request.files["image"]
-   if file.filename == "":
-       return jsonify({"error": "Empty filename"}), 400
+        return jsonify({
+            "message": "Upload successful",
+            "link": s3_url,
+            "category": category,
+            "cost": cost,
+            "condition": condition_numeric, 
+            "item_name": item_name, 
+            "min_temp": min_temp,
+            "max_temp": max_temp
+            # "applicable_days": applicable_days
 
+            
+        }), 200
 
-   category = request.form.get("category")
-   price = request.form.get("price")
-   condition = request.form.get("condition")
-
-
-   input_data = file.read()
-
-
-   try:
-       # Step 1: Remove background
-       output_data = remove(input_data)
-       print("before opening image")
-
-
-       output_image = Image.open(io.BytesIO(output_data))
-
-
-       # Step 2: Save to buffer
-       img_io = io.BytesIO()
-       print("before saving to local")
-
-
-       output_image.save(img_io, format="PNG")
-       img_io.seek(0)
-
-
-       # Step 3: Upload to S3
-
-
-       image_id = f"{uuid.uuid4()}.png"
-       print("before s3.uploadfile")
-       print(img_io)
-       s3.upload_fileobj(
-           Fileobj= img_io,
-           Bucket= BUCKET_NAME,
-           Key= image_id,
-       )
-       print("before s3 url")
-       s3_url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{image_id}"
-
-
-       # Step 4: Send back response
-       print(jsonify({
-           "message": "Upload successful",
-           "s3_url": s3_url,
-           "category": category,
-           "price": price,
-           "condition": condition
-       }), 200)
-       return jsonify({
-           "message": "Upload successful",
-           "s3_url": s3_url,
-           "category": category,
-           "price": price,
-           "condition": condition
-       }), 200
-
-
-   except Exception as e:
-       return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 
