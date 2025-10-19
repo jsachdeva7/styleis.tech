@@ -1,6 +1,16 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from routes import home_bp, clothes_bp, weather_bp, locations_bp, donations_bp
+import logging
+import sys
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    stream=sys.stdout
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
@@ -14,6 +24,18 @@ CORS(app, resources={
         "supports_credentials": False
     }
 })
+
+# Log all requests
+@app.before_request
+def log_request_info():
+    logger.info(f'Request: {request.method} {request.path}')
+    if request.args:
+        logger.info(f'Query params: {dict(request.args)}')
+
+@app.after_request
+def log_response_info(response):
+    logger.info(f'Response: {response.status_code}')
+    return response
 
 # Register blueprints
 app.register_blueprint(home_bp)
@@ -45,6 +67,8 @@ def echo():
 
 
 if __name__ == "__main__":
-    # Run the app on http://127.0.0.1:5000
-    app.run(debug=True)
-
+    import os
+    port = int(os.environ.get("PORT", 10000))  # use Render's assigned port
+    logger.info(f"🚀 Starting Flask app on port {port}")
+    logger.info(f"🌍 Environment: {'Production' if os.environ.get('RENDER') else 'Development'}")
+    app.run(host="0.0.0.0", port=port, debug=True)
