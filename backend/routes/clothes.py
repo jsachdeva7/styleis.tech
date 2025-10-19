@@ -1,7 +1,6 @@
 import io
 import uuid
 import os
-
 from flask import Blueprint, request, jsonify
 from PIL import Image
 from rembg import remove
@@ -55,6 +54,7 @@ def add_clothing_item():
     cost = request.form.get("cost")
     item_name = request.form.get("item_name")
     min_temp = request.form.get("min_temp")
+
     max_temp = request.form.get("max_temp")
 
     condition = request.form.get("condition", "worn").lower()  # default to 'worn'
@@ -75,6 +75,7 @@ def add_clothing_item():
 
         # Step 3: Upload to S3
         image_id = f"{uuid.uuid4()}.png"
+        print(img_io)
         s3.upload_fileobj(
             Fileobj=img_io,
             Bucket=BUCKET_NAME,
@@ -92,7 +93,12 @@ def add_clothing_item():
             "condition": condition_numeric,
             "usage_count": 0,
             "in_jail": False,
-            "marked_for_donation": False
+            "marked_for_donation": False,
+            "condition": condition_numeric, 
+            "item_name": item_name, 
+            "min_temp": min_temp,
+            "max_temp": max_temp,
+            "applicable_days": "that's just a fucking useless feature! "
         })
 
         return jsonify({
@@ -100,18 +106,16 @@ def add_clothing_item():
             "link": s3_url,
             "category": category,
             "cost": cost,
-            "condition": condition_numeric, 
-            "item_name": item_name, 
-            "min_temp": min_temp,
-            "max_temp": max_temp
-            # "applicable_days": applicable_days
+        
 
             
         }), 200
 
     except Exception as e:
+        import traceback
+        print("🔥 ERROR TRACEBACK 🔥")
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
-
 
 
 
