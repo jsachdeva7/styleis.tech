@@ -27,7 +27,7 @@ def calculate_applicable_days(min_temp, max_temp):
     end_date = end_date.strftime("%Y-%m-%d")
 
 
-    querystring = {"lat":"52.5244","lon":"13.4105","start":start_date,"end":end_date}
+    querystring = {"lat":"30.2672","lon":"-97.7431","start":start_date,"end":end_date}
 
     headers = {
         "x-rapidapi-key": "cea94ee8d2msha44e92992b315a3p10f03cjsn34baa9685b74",
@@ -383,16 +383,15 @@ def get_donation_basket():
     try:
         clothes_ref = db.collection("clothes")
         docs = clothes_ref.stream()
-        donation_candidates = []
+        donation_basket = []
         for doc in docs:
             data = doc.to_dict()
             # Firestore may store bools or ints, so check both
-            in_jail = data.get("in_jail", 0)
             marked_for_donation = data.get("marked_for_donation", 0)
-            if in_jail == 1 and marked_for_donation == 0:
+            if marked_for_donation == 1:
                 data["id"] = doc.id
-                donation_candidates.append(data)
-        return jsonify({"donation_basket": donation_candidates}), 200
+                donation_basket.append(data)
+        return jsonify({"donation_basket": donation_basket}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
