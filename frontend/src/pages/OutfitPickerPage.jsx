@@ -52,7 +52,7 @@ const OutfitPickerPage = () => {
       return { hat: [], shirt: [], bottom: [], shoe: [] };
     }
 
-    const currentTemp = weather.temperature;
+    const currentTemp = 74;
 
     // Filter function to check if item is appropriate for current temperature
     const isAppropriateForTemp = (item) => {
