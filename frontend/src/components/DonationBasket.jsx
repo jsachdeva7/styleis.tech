@@ -42,7 +42,7 @@ const DonationBasket = ({ onBackToSuggestions }) => {
     <div className="p-4 h-full flex flex-col relative">
       {/* Popup */}
       {showPopup && (
-        <div className="fixed bottom-32 left-1/2 transform -translate-x-1/2 z-50">
+        <div className="fixed bottom-36 left-1/2 transform -translate-x-1/2 z-50">
           <div className="bg-white rounded-lg px-6 py-3 shadow-lg border border-gray-200 min-w-[280px]">
             <p className="text-base font-medium text-gray-800 text-center">
               ⭐ You're a star. You just saved ~6 lbs of CO2 emissions.
