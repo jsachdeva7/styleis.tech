@@ -7,12 +7,13 @@ import { fetchClothes } from '../api/clothesApi';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const OutfitPickerPage = () => {
-  // Fetch weather data with caching (shared with other components)
+  // Weather API fetch disabled - using hardcoded temperature value
   const { data: weather, isLoading: weatherLoading } = useQuery({
     queryKey: ['weather'],
     queryFn: () => fetchWeather(),
     staleTime: 10 * 60 * 1000, // Weather data fresh for 10 minutes
     retry: 1,
+    enabled: false, // Disable API calls - using hardcoded value
   });
 
   // Fetch clothes data with caching (shared with Closet component)
@@ -51,7 +52,7 @@ const OutfitPickerPage = () => {
 
   // Filter clothes by temperature range
   const categories = useMemo(() => {
-    if (!allClothes || !weather) {
+    if (!allClothes) {
       return { hat: [], shirt: [], bottom: [], shoe: [] };
     }
 
@@ -66,7 +67,7 @@ const OutfitPickerPage = () => {
       bottom: [...(allClothes.shorts || []), ...(allClothes.longPants || [])].filter(isAppropriateForTemp),
       shoe: allClothes.shoes?.filter(isAppropriateForTemp) || []
     };
-  }, [allClothes, weather]);
+  }, [allClothes]);
 
   const categoryNames = {
     hat: 'Hat',
@@ -132,7 +133,7 @@ const OutfitPickerPage = () => {
   };
 
   // Show loading spinner while fetching data
-  if (weatherLoading || clothesLoading) {
+  if (clothesLoading) {
     return (
       <div className="h-full flex flex-col">
         <LoadingSpinner message="Loading outfit picker..." />
@@ -166,24 +167,13 @@ const OutfitPickerPage = () => {
 
       {/* Weather Display */}
       <div className="absolute top-2 right-2 bg-white/40 backdrop-blur-md rounded-lg px-2 py-0.5 shadow-sm">
-        {weatherLoading ? (
-          <div className="flex items-center gap-1 px-1">
-            <div className="text-xs text-gray-600">Loading...</div>
-          </div>
-        ) : weather ? (
-          <div className="flex items-center gap-1">
-            {/* Weather Icon */}
-            <div className="text-sm">{weather.weather_emoji}</div>
-            
-            {/* Current Temperature */}
-            <div className="text-xs font-medium text-gray-800">{weather.temperature}°F</div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-1">
-            <div className="text-sm">🌤️</div>
-            <div className="text-xs font-medium text-gray-800">--°F</div>
-          </div>
-        )}
+        <div className="flex items-center gap-1">
+          {/* Weather Icon */}
+          <div className="text-sm">☀️</div>
+          
+          {/* Current Temperature - Hardcoded */}
+          <div className="text-xs font-medium text-gray-800">{currentTemp}°F</div>
+        </div>
       </div>
       {/* Hat Selection - 15% of available height */}
       <div className="relative w-full" style={{ height: '15%' }}>
