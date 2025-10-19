@@ -39,3 +39,20 @@ body {
   border-radius: 20px;
   overflow: hidden;
 }
+
+/* Hide Scrollbar - Mobile-style */
+/* For WebKit browsers (Chrome, Safari, Edge) */
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* For IE, Edge and Firefox */
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
