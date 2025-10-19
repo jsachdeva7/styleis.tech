@@ -1,11 +1,9 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask import Blueprint, request, jsonify
 import requests
 from math import radians, cos, sin, asin, sqrt
 import time
 
-app = Flask(__name__)
-CORS(app)  # Enable CORS
+donations_bp = Blueprint('donations', __name__)
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
@@ -71,7 +69,7 @@ def fetch_clothing_donations(lat, lon, radius, query):
     return results
 
 # ---------- GET endpoint with query parameter ----------
-@app.route("/donation_centers", methods=["GET"])
+@donations_bp.route("/locations", methods=["GET"])
 def donation_centers():
     lat = request.args.get("lat", type=float)
     lon = request.args.get("lon", type=float)
@@ -92,6 +90,3 @@ def donation_centers():
         time.sleep(1)
 
     return jsonify(centers[:5])
-
-if __name__ == "__main__":
-    app.run(debug=True)

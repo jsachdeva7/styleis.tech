@@ -1,15 +1,14 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
+from routes import home_bp, remove_bg_bp, donations_bp
 
 app = Flask(__name__)
+CORS(app)
 
-
-@app.route("/", methods=["GET"])
-
-@app.route("/donation_centers", methods=["GET"])
-
-
-def home():
-    return "Flask app is running!"
+# Register blueprints
+app.register_blueprint(home_bp)
+app.register_blueprint(remove_bg_bp, url_prefix='/api/images')
+app.register_blueprint(donations_bp, url_prefix='/api/donations')
 
 # Example POST endpoint
 @app.route("/echo", methods=["POST"])

@@ -3,7 +3,7 @@ from rembg import remove
 from PIL import Image
 import io
 
-remove_bg_bp = Blueprint("remove_bg_bp", __name__)
+remove_bg_bp = Blueprint('images', __name__)
 
 @remove_bg_bp.route("/remove-bg", methods=["GET", "POST"])
 def remove_bg():
