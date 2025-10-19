@@ -23,7 +23,7 @@ const LON = -97.934547;
 // Immediately send request when page loads
 (async () => {
     try {
-        const response = await fetch(`http://127.0.0.1:5000/api/locations?lat=${LAT}&lon=${LON}`);
+        const response = await fetch(`http://localhost:5000/api/locations?lat=${LAT}&lon=${LON}`);
         const data = await response.json();
 
         if (!data.length) {
