@@ -32,6 +32,9 @@ const OutfitPickerPage = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
   const [isLockingIn, setIsLockingIn] = useState(false);
 
+  // Hardcoded temperature value for testing
+  const currentTemp = 74;
+
   // Auto-dismiss toast after 3 seconds
   useEffect(() => {
     if (toast.show) {
@@ -51,8 +54,6 @@ const OutfitPickerPage = () => {
     if (!allClothes || !weather) {
       return { hat: [], shirt: [], bottom: [], shoe: [] };
     }
-
-    const currentTemp = 74;
 
     // Filter function to check if item is appropriate for current temperature
     const isAppropriateForTemp = (item) => {
@@ -254,8 +255,8 @@ const OutfitPickerPage = () => {
            <FontAwesomeIcon icon={faCaretRight} style={{color: "#007856"}} />
          </button>
 
-         {/* Add Layer Button - Only show when temperature is 65°F or below */}
-         {weather && weather.temperature <= 65 && (
+        {/* Add Layer Button - Only show when temperature is 65°F or below */}
+        {currentTemp <= 65 && (
            <button
              onClick={() => console.log('Add layer')}
              className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-white/80 hover:bg-white text-gray-700 hover:text-gray-900 text-sm font-medium px-2 py-1 rounded-full shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm"
