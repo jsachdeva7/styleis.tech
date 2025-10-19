@@ -3,7 +3,17 @@ from flask_cors import CORS
 from routes import home_bp, remove_bg_bp, clothes_bp, weather_bp, locations_bp, donations_bp
 
 app = Flask(__name__)
-CORS(app)
+
+# Configure CORS to allow all origins
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "expose_headers": ["Content-Type"],
+        "supports_credentials": False
+    }
+})
 
 # Register blueprints
 app.register_blueprint(home_bp)

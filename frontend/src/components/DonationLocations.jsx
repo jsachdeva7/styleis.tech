@@ -29,7 +29,7 @@ const DonationLocations = ({ onBackToSuggestions, onShowBasket }) => {
 
   const fetchLocations = async (lat, lng) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/donations/locations?lat=${lat}&lon=${lng}`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/donations/locations?lat=${lat}&lon=${lng}`);
       const data = await response.json();
       
       if (response.ok) {

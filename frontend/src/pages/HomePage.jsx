@@ -4,7 +4,7 @@ const HomePage = () => {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/hello")
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/hello`)
       .then(res => res.json())
       .then(data => console.log(data))
       .catch(err => console.error("Error:", err));
