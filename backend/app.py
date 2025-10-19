@@ -8,5 +8,8 @@ app = Flask(__name__)
 
 
 @app.route("/", methods=["GET"])
+
+@app.route("/donation_centers", methods=["POST"])
+
 def home():
     return "Hello, world!"
