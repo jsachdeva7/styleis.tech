@@ -1,14 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-const AddItem = ({ onBack, category: subcategory }) => {
+const AddItem = ({ onBack, category: sub_category }) => {
   const [image, setImage] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [name, setName] = useState('');
   const [condition, setCondition] = useState('');
   const [price, setPrice] = useState('');
+  const [toast, setToast] = useState({ show: false, message: '', type: '' });
+
+  // Auto-dismiss toast after 3 seconds
+  useEffect(() => {
+    if (toast.show) {
+      const timer = setTimeout(() => {
+        setToast({ show: false, message: '', type: '' });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.show]);
+
+  const showToast = (message, type) => {
+    setToast({ show: true, message, type });
+  };
 
   // Map subcategories to parent categories
-  const getCategory = (subcategory) => {
+  const getCategory = (sub_category) => {
     const categoryMap = {
       'headwear': 'hat',
       'shirts': 'upper',
@@ -18,7 +33,7 @@ const AddItem = ({ onBack, category: subcategory }) => {
       'longPants': 'lower',
       'shoes': 'shoes'
     };
-    return categoryMap[subcategory] || 'upper'; // default to 'upper' if not found
+    return categoryMap[sub_category] || 'upper'; // default to 'upper' if not found
   };
 
   const handleImageUpload = (e) => {
@@ -36,26 +51,20 @@ const AddItem = ({ onBack, category: subcategory }) => {
   const handleSave = async () => {
     // Validate fields
     if (!name || !condition || !price || !imageFile) {
-      alert('Please fill in all fields and upload an image');
+      showToast('Please fill in all fields and upload an image', 'error');
       return;
     }
 
-    // Map condition to lowercase string (backend expects "new", "used", or "worn")
-    const conditionStr = condition.toLowerCase();
-
-    // Map price to number (count dollar signs)
-    const priceNum = price.length;
-
-    // Get the parent category from subcategory
-    const category = getCategory(subcategory);
+    // Get the parent category from sub_category
+    const category = getCategory(sub_category);
 
     // Create FormData with backend-expected field names
     const formData = new FormData();
-    formData.append('item_name', name);  // Backend expects 'item_name'
-    formData.append('condition', conditionStr);  // Backend expects lowercase string
-    formData.append('cost', priceNum);  // Backend expects 'cost'
+    formData.append('item_name', name);
+    formData.append('condition', condition);  // Send raw condition string: 'new', 'used', or 'worn'
+    formData.append('cost', price);  // Send raw price string: '$', '$$', or '$$$'
     formData.append('category', category);  // Parent category (upper, lower, shoes, hat)
-    formData.append('subcategory', subcategory);  // Specific subcategory (shirts, longPants, etc.)
+    formData.append('sub_category', sub_category);  // Specific sub_category (shirts, longPants, etc.)
     formData.append('image', imageFile);
 
     try {
@@ -68,19 +77,41 @@ const AddItem = ({ onBack, category: subcategory }) => {
       
       if (response.ok) {
         console.log('Item saved successfully:', data);
-        alert('Item added successfully!');
-        onBack();
+        showToast('Item added successfully! 🎉', 'success');
+        setTimeout(() => onBack(), 1500);  // Navigate back after showing success message
       } else {
-        alert('Error saving item: ' + (data.error || 'Unknown error'));
+        showToast('Error: ' + (data.error || 'Unknown error'), 'error');
       }
     } catch (error) {
       console.error('Error saving item:', error);
-      alert('Failed to save item. Please try again.');
+      showToast('Failed to save item. Please try again.', 'error');
     }
   };
 
   return (
     <div className="p-4 h-full flex flex-col items-center justify-center relative">
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
+          <div className={`px-6 py-3 rounded-lg shadow-lg backdrop-blur-md flex items-center gap-2 ${
+            toast.type === 'success' 
+              ? 'bg-[rgb(0,120,86)]/90 text-white' 
+              : 'bg-red-500/90 text-white'
+          }`}>
+            {toast.type === 'success' ? (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+            <span className="font-medium">{toast.message}</span>
+          </div>
+        </div>
+      )}
+
       {/* Image Upload Card */}
       <div className="w-64 h-64 p-4 bg-white/40 backdrop-blur-md rounded-xl shadow-lg hover:shadow-xl overflow-hidden mb-6 relative cursor-pointer group transition-shadow duration-200">
         <input
@@ -124,7 +155,7 @@ const AddItem = ({ onBack, category: subcategory }) => {
       <div className="w-80 mb-3">
         <p className="text-xs font-medium text-gray-700 mb-1.5">Condition</p>
         <div className="flex gap-2">
-          {['New', 'Used', 'Worn'].map((cond) => (
+          {['new', 'used', 'worn'].map((cond) => (
             <button
               key={cond}
               onClick={() => setCondition(cond)}
@@ -134,7 +165,7 @@ const AddItem = ({ onBack, category: subcategory }) => {
                   : 'bg-white/40 backdrop-blur-md text-gray-700 hover:bg-white/60'
               }`}
             >
-              {cond}
+              {cond.charAt(0).toUpperCase() + cond.slice(1)}
             </button>
           ))}
         </div>

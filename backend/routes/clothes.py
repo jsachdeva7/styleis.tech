@@ -99,27 +99,26 @@ def add_clothing_item():
     condition_numeric = CONDITION_MAPPING.get(condition, 1)
 
     min_temp_map = {
-    "layers": 20,
-    "shoes": -100,
-    "long pants": 20,
-    "shorts": 61,
-    "shirts": 61,
-    "headwear": -100,
-    "winterwear": -100
-}
+        "layers": 20,
+        "shoes": -100,
+        "longPants": 20,  # Changed from "long pants" to match frontend
+        "shorts": 61,
+        "shirts": 61,
+        "headwear": -100,
+        "winterwear": -100
+    }
 
     max_temp_map = {
         "layers": 60,
         "shoes": 100,
-        "long pants": 60,
+        "longPants": 60,  # Changed from "long pants" to match frontend
         "shorts": 100,
         "shirts": 100,
         "headwear": 100,
         "winterwear": 19
     }
-    min_temp= min_temp_map.get(sub_category)
-    max_temp= max_temp_map.get(sub_category)
-
+    min_temp = min_temp_map.get(sub_category, -100)  # Default to -100 if not found
+    max_temp = max_temp_map.get(sub_category, 100)  # Default to 100 if not found
 
     input_data = file.read()
 
@@ -149,31 +148,35 @@ def add_clothing_item():
         # Step 4: Save metadata to Firestore
         doc_ref = db.collection("clothes").document(image_id)
         doc_ref.set({
-            "clothing_id": uuid.uuid4(), 
+            "clothing_id": str(uuid.uuid4()),  # Convert UUID to string
             "link": s3_url,
             "category": category,
-            "cost": cost,
-            "condition": condition_numeric,
+            "sub_category": sub_category,  # Store subcategory
+            "cost": cost,  # Now stores '$', '$$', or '$$$'
+            "condition": condition,  # Now stores 'new', 'used', or 'worn'
             "frequency": 0,
-            "in_jail": 0,
-            "marked_for_donation": 0,
-            "condition": condition_numeric, 
+            "in_jail": False,  # Use boolean instead of 0
+            "marked_for_donation": False,  # Use boolean instead of 0
             "item_name": item_name, 
             "min_temp": int(min_temp),
             "max_temp": int(max_temp),
-            "created_date": date.today(),
+            "created_date": date.today().isoformat(),  # Convert date to ISO string
             "applicable_days": calculate_applicable_days(int(min_temp), int(max_temp)), 
             "last_worn_date": None
         })
 
         return jsonify({
+            "success": True,
             "message": "Upload successful",
-            "link": s3_url,
-            "category": category,
-            "cost": cost,
-        
-
-            
+            "item": {
+                "link": s3_url,
+                "image_id": image_id,
+                "item_name": item_name,
+                "category": category,
+                "sub_category": sub_category,
+                "cost": cost,
+                "condition": condition
+            }
         }), 200
 
     except Exception as e:
