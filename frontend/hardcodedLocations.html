@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Donation Centers Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    li { margin-bottom: 15px; border-bottom: 1px solid #ccc; padding-bottom: 10px; list-style: none; }
+  </style>
+</head>
+<body>
+
+<h1>Nearby Donation Centers (Hardcoded Coordinates)</h1>
+<ul id="results"></ul>
+
+<script>
+const resultsList = document.getElementById('results');
+
+// Hardcoded coordinates for testing (UT Austin)
+const LAT = 33.771339;
+const LON = -84.394386;
+
+// Immediately send request when page loads
+(async () => {
+    try {
+        const response = await fetch(`http://localhost:5000/api/locations?lat=${LAT}&lon=${LON}`);
+        const data = await response.json();
+
+        if (!data.length) {
+            resultsList.innerHTML = "<li>No donation centers found nearby.</li>";
+            return;
+        }
+
+        data.forEach(center => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+                <strong>${center.name}</strong><br>
+                Address: ${center.address}<br>
+                Distance: ${center.distance_miles} miles
+            `;
+
+            if (center.name.toLowerCase().includes("goodwill")) {
+                li.innerHTML += `<br><img src="https://goodwillwa.org/wp-content/uploads/2024/08/shop-page-retail-image.jpg" 
+                alt="Goodwill" style="height:120px;margin-top:5px;">`;
+            } else if (center.name.toLowerCase().includes("salvation army")) {
+                li.innerHTML += `<br><img src="https://www.twincities.com/wp-content/uploads/2015/10/wpid-20150415__1-SalvationArmy_skybox.jpg?w=491" 
+                alt="Salvation Army" style="height:120px;margin-top:5px;">`;
+            } else if (center.name.toLowerCase().includes("hill country senior citizens thrift shop")) {
+                li.innerHTML += `<br><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2k0KVBhXAJhm-H4Z-LuqTV8gnmQ7CkUOMrw&s" 
+                alt="Hill Country Senior Citizens Thrift Shop" style="height:120px;margin-top:5px;">`;
+            } else if (center.name.toLowerCase().includes("the cranny")) {
+                li.innerHTML += `<br><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTU86huE5JYhSqFs9MwGIgQ7JmuKH2DmxfY5Q&s" 
+                alt="The Cranny" style="height:120px;margin-top:5px;">`;
+            } else if (center.name.toLowerCase().includes("besharat gallery foundation")) {
+                li.innerHTML += `<br><img src="https://themuseumschool.org/wp-content/uploads/2020/02/03.jpg" 
+                alt="Besharat Gallery Foundation" style="height:120px;margin-top:5px;">`;
+            } else if (center.name.toLowerCase().includes("habitat for humanity restore")) {
+                li.innerHTML += `<br><img src="https://habitatgfw.com/wp-content/uploads/2023/11/ReStore-Checkout-Shop.jpg" 
+                alt="Habitat for Humanity ReStore" style="height:120px;margin-top:5px;">`;
+            }
+
+
+            resultsList.appendChild(li);
+        });
+
+    } catch (err) {
+        console.error(err);
+        resultsList.innerHTML = "<li>Error fetching donation centers.</li>";
+    }
+})();
+</script>
+
+</body>
+</html>
