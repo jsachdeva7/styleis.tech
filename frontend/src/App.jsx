@@ -14,8 +14,8 @@ function App() {
         <div className="h-full bg-[rgb(245,237,223)] flex flex-col relative">
           <div className="flex-1 overflow-y-auto pb-16">
             <Routes>
-              <Route path="/" element={<ClosetPage />} />
-              <Route path="/outfit-picker" element={<OutfitPickerPage />} />
+              <Route path="/" element={<OutfitPickerPage />} />
+              <Route path="/closet" element={<ClosetPage />} />
               <Route path="/donation" element={<DonationPage />} />
             </Routes>
           </div>

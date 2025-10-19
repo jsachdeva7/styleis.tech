@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCaretLeft, faCaretRight } from '@fortawesome/free-solid-svg-icons';
@@ -28,6 +28,23 @@ const OutfitPickerPage = () => {
     bottom: 0,
     shoe: 0
   });
+
+  const [toast, setToast] = useState({ show: false, message: '', type: '' });
+  const [isLockingIn, setIsLockingIn] = useState(false);
+
+  // Auto-dismiss toast after 3 seconds
+  useEffect(() => {
+    if (toast.show) {
+      const timer = setTimeout(() => {
+        setToast({ show: false, message: '', type: '' });
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.show]);
+
+  const showToast = (message, type) => {
+    setToast({ show: true, message, type });
+  };
 
   // Filter clothes by temperature range
   const categories = useMemo(() => {
@@ -73,6 +90,46 @@ const OutfitPickerPage = () => {
     });
   };
 
+  const handleLockIn = async () => {
+    // Collect the IDs of selected clothing items
+    const clothingIds = [];
+    
+    if (categories.hat.length > 0 && categories.hat[outfit.hat]) {
+      clothingIds.push(categories.hat[outfit.hat].id);
+    }
+    if (categories.shirt.length > 0 && categories.shirt[outfit.shirt]) {
+      clothingIds.push(categories.shirt[outfit.shirt].id);
+    }
+    if (categories.bottom.length > 0 && categories.bottom[outfit.bottom]) {
+      clothingIds.push(categories.bottom[outfit.bottom].id);
+    }
+    if (categories.shoe.length > 0 && categories.shoe[outfit.shoe]) {
+      clothingIds.push(categories.shoe[outfit.shoe].id);
+    }
+
+    if (clothingIds.length === 0) {
+      showToast('Please select at least one clothing item for your outfit', 'error');
+      return;
+    }
+
+    try {
+      setIsLockingIn(true);
+      
+      // Mock API call with a slight delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Mock success response
+      console.log('OOTD locked in with clothing IDs:', clothingIds);
+      
+      showToast('Outfit locked in! ✨', 'success');
+    } catch (error) {
+      console.error('Error creating OOTD:', error);
+      showToast(`Failed to lock in outfit: ${error.message}`, 'error');
+    } finally {
+      setIsLockingIn(false);
+    }
+  };
+
   // Show loading spinner while fetching data
   if (weatherLoading || clothesLoading) {
     return (
@@ -84,6 +141,28 @@ const OutfitPickerPage = () => {
 
   return (
     <div className="px-2 py-8 h-full flex flex-col relative">
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 animate-fade-in">
+          <div className={`px-6 py-3 rounded-lg shadow-lg backdrop-blur-md flex items-center gap-2 ${
+            toast.type === 'success' 
+              ? 'bg-[rgb(0,120,86)]/90 text-white' 
+              : 'bg-red-500/90 text-white'
+          }`}>
+            {toast.type === 'success' ? (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+            <span className="font-medium">{toast.message}</span>
+          </div>
+        </div>
+      )}
+
       {/* Weather Display */}
       <div className="absolute top-2 right-2 bg-white/40 backdrop-blur-md rounded-lg px-2 py-0.5 shadow-sm">
         {weatherLoading ? (
@@ -175,13 +254,15 @@ const OutfitPickerPage = () => {
            <FontAwesomeIcon icon={faCaretRight} style={{color: "#007856"}} />
          </button>
 
-         {/* Add Layer Button */}
-         <button
-           onClick={() => console.log('Add layer')}
-           className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-white/80 hover:bg-white text-gray-700 hover:text-gray-900 text-sm font-medium px-2 py-1 rounded-full shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm"
-         >
-           Add layer
-         </button>
+         {/* Add Layer Button - Only show when temperature is 65°F or below */}
+         {weather && weather.temperature <= 65 && (
+           <button
+             onClick={() => console.log('Add layer')}
+             className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-white/80 hover:bg-white text-gray-700 hover:text-gray-900 text-sm font-medium px-2 py-1 rounded-full shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm"
+           >
+             Add layer
+           </button>
+         )}
        </div>
 
       {/* Bottom Selection - 30% of available height */}
@@ -257,10 +338,11 @@ const OutfitPickerPage = () => {
       <div className="flex flex-col items-center mt-4">
         <h2 className="text-2xl text-center font-semibold text-[rgb(0,120,86)] mb-2">Outfit of the Day</h2>
         <button
-          onClick={() => console.log('Outfit locked in')}
-          className="bg-white/40 hover:bg-white/60 backdrop-blur-md text-[rgb(0,120,86)] hover:text-gray-900 text-sm font-medium px-3 py-1 rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+          onClick={handleLockIn}
+          disabled={isLockingIn}
+          className="bg-white/40 hover:bg-white/60 backdrop-blur-md text-[rgb(0,120,86)] hover:text-gray-900 text-sm font-medium px-3 py-1 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Lock in
+          {isLockingIn ? 'Locking in...' : 'Lock in'}
         </button>
       </div>
     </div>
