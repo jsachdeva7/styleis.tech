@@ -48,12 +48,25 @@ if (navigator.geolocation) {
                 if (center.name.toLowerCase().includes("goodwill")) {
                 li.innerHTML += `<br><img src="https://goodwillwa.org/wp-content/uploads/2024/08/shop-page-retail-image.jpg" 
                 alt="Goodwill" style="height:120px;margin-top:5px;">`;
-                } 
-                
-                else if (center.name.toLowerCase().includes("salvation army")) {
-                    li.innerHTML += `<br><img src="https://www.twincities.com/wp-content/uploads/2015/10/wpid-20150415__1-SalvationArmy_skybox.jpg?w=491" 
-                    alt="Salvation Army" style="height:120px;margin-top:5px;">`;
+                } else if (center.name.toLowerCase().includes("salvation army")) {
+                li.innerHTML += `<br><img src="https://www.twincities.com/wp-content/uploads/2015/10/wpid-20150415__1-SalvationArmy_skybox.jpg?w=491" 
+                alt="Salvation Army" style="height:120px;margin-top:5px;">`;
+                } else if (center.name.toLowerCase().includes("hill country senior citizens thrift shop")) {
+                li.innerHTML += `<br><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ2k0KVBhXAJhm-H4Z-LuqTV8gnmQ7CkUOMrw&s" 
+                alt="Hill Country Senior Citizens Thrift Shop" style="height:120px;margin-top:5px;">`;
+                } else if (center.name.toLowerCase().includes("the cranny")) {
+                li.innerHTML += `<br><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTU86huE5JYhSqFs9MwGIgQ7JmuKH2DmxfY5Q&s" 
+                alt="The Cranny" style="height:120px;margin-top:5px;">`;
+                } else if (center.name.toLowerCase().includes("besharat gallery foundation")) {
+                li.innerHTML += `<br><img src="https://themuseumschool.org/wp-content/uploads/2020/02/03.jpg" 
+                alt="Besharat Gallery Foundation" style="height:120px;margin-top:5px;">`;
+                } else if (center.name.toLowerCase().includes("habitat for humanity restore")) {
+                li.innerHTML += `<br><img src="https://habitatgfw.com/wp-content/uploads/2023/11/ReStore-Checkout-Shop.jpg" 
+                alt="Habitat for Humanity ReStore" style="height:120px;margin-top:5px;">`;
                 }
+
+
+
                 resultsList.appendChild(li);
             });
 
